@@ -12,10 +12,12 @@ namespace type
 
 struct character
 {
+    using attribute_type = attribute<character>;
+
     std::string ref_name;
     std::string first_name;
     std::string last_name;
-    std::vector<attribute> attributes;
+    std::vector<attribute_type> attributes;
 };
 
 std::ostream & operator<<(std::ostream & os, const character & c)

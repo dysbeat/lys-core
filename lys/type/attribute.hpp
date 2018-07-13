@@ -7,13 +7,15 @@ namespace lys
 namespace type
 {
 
+template <typename T>
 struct attribute
 {
     std::string key;
     std::string value;
 };
 
-std::ostream & operator<<(std::ostream & os, const attribute & a)
+template <typename T>
+std::ostream & operator<<(std::ostream & os, const attribute<T> & a)
 {
     os << a.key << " - " << a.value;
     return os;
