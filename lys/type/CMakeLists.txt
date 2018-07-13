@@ -3,6 +3,7 @@ add_library(type INTERFACE)
 target_sources(type INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/attribute.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/character.hpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/event.hpp
     ${CMAKE_CURRENT_SOURCE_DIR}/scene.hpp
 )
 
