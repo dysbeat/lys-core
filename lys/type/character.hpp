@@ -14,15 +14,17 @@ struct character
 {
     using attribute_type = attribute<character>;
 
-    std::string ref_name;
+    std::string ref;
     std::string first_name;
     std::string last_name;
     std::vector<attribute_type> attributes;
 };
 
+using character_list = std::vector<character>;
+
 std::ostream & operator<<(std::ostream & os, const character & c)
 {
-    os << c.ref_name << " - " << c.first_name << " - " << c.last_name;
+    os << c.ref << " - " << c.first_name << " - " << c.last_name;
     return os;
 }
 
