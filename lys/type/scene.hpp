@@ -5,8 +5,7 @@
 
 namespace lys
 {
-namespace type
-{
+
 struct scene
 {
     event_list events;
@@ -19,5 +18,4 @@ std::ostream & operator<<(std::ostream & os, const scene & s)
     return os;
 }
 
-} // namespace type
 } // namespace lys

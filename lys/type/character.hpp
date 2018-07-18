@@ -7,8 +7,6 @@
 
 namespace lys
 {
-namespace type
-{
 
 struct character
 {
@@ -28,5 +26,4 @@ std::ostream & operator<<(std::ostream & os, const character & c)
     return os;
 }
 
-} // namespace type
 } // namespace lys

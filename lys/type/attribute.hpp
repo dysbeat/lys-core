@@ -4,8 +4,6 @@
 
 namespace lys
 {
-namespace type
-{
 
 template <typename T>
 struct attribute
@@ -21,5 +19,4 @@ std::ostream & operator<<(std::ostream & os, const attribute<T> & a)
     return os;
 }
 
-} // namespace type
 } // namespace lys

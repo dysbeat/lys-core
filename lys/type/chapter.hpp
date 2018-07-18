@@ -5,8 +5,6 @@
 
 namespace lys
 {
-namespace type
-{
 struct chapter
 {
     std::string name;
@@ -21,5 +19,4 @@ std::ostream & operator<<(std::ostream & os, const chapter & c)
     return os;
 }
 
-} // namespace type
 } // namespace lys

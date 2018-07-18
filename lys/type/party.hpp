@@ -5,8 +5,6 @@
 
 namespace lys
 {
-namespace type
-{
 
 struct party
 {
@@ -22,5 +20,4 @@ std::ostream & operator<<(std::ostream & os, const party & p)
     return os;
 }
 
-} // namespace type
 } // namespace lys
