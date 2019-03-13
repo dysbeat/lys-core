@@ -7,6 +7,7 @@ namespace lys::core::sql
 {
 
 void execute(sqlite3 * db, std::string stmt);
+void prepare(sqlite3 * db, std::string stmt, sqlite3_stmt ** res);
 void execute(sqlite3 * db, std::string stmt, int (*callback)(void *, int, char **, char **));
 
 } // namespace lys::core::sql

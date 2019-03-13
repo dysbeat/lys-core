@@ -22,6 +22,11 @@ constexpr auto convert_to_sqlite_type = boost::hana::make_map( //
     boost::hana::make_pair(boost::hana::type_c<int>, BOOST_HANA_STRING("INT")),
     boost::hana::make_pair(boost::hana::type_c<double>, BOOST_HANA_STRING("REAL")));
 
+constexpr auto convert_to_sqlite_function = boost::hana::make_map( //
+    boost::hana::make_pair(boost::hana::type_c<std::string>, sqlite3_column_text),
+    boost::hana::make_pair(boost::hana::type_c<int>, sqlite3_column_int),
+    boost::hana::make_pair(boost::hana::type_c<double>, sqlite3_column_double));
+
 } // namespace lys::core::sql
 
 namespace lys::core

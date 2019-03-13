@@ -6,17 +6,6 @@
 #include <iostream>
 #include <stdexcept>
 
-static int callback(void * NotUsed, int argc, char ** argv, char ** azColName)
-{
-    NotUsed = 0;
-    for (int i = 0; i < argc; i++)
-    {
-        std::cout << azColName[i] << ": " << (argv[i] ? argv[i] : "(null)") << '\n';
-    }
-    std::cout << '\n';
-    return 0;
-}
-
 int main()
 {
     sqlite3 * db;
@@ -44,7 +33,13 @@ int main()
         sql::insert<car>(db, c);
     }
 
-    sql::select_all<car>(db, callback);
+    std::vector<car> results;
+    sql::select_all<car>(db, results);
+
+    for (const car & c : results)
+    {
+        fmt::print("result: ({}, {}, {})\n", c.id, c.name, c.price);
+    }
 
     sqlite3_close(db);
 }
