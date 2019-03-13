@@ -1,0 +1,39 @@
+#pragma once
+
+#include <boost/hana/adapt_struct.hpp>
+#include <boost/hana/experimental/type_name.hpp>
+#include <boost/hana/for_each.hpp>
+#include <boost/hana/functional/compose.hpp>
+#include <boost/hana/map.hpp>
+#include <boost/hana/pair.hpp>
+#include <boost/hana/string.hpp>
+#include <fmt/format.h>
+#include <sqlite3/sqlite3.h>
+#include <iostream>
+#include <string>
+#include <tuple>
+#include <vector>
+
+namespace lys::core::sql
+{
+
+constexpr auto convert_to_sqlite_type = boost::hana::make_map( //
+    boost::hana::make_pair(boost::hana::type_c<std::string>, BOOST_HANA_STRING("TEXT")),
+    boost::hana::make_pair(boost::hana::type_c<int>, BOOST_HANA_STRING("INT")),
+    boost::hana::make_pair(boost::hana::type_c<double>, BOOST_HANA_STRING("REAL")));
+
+} // namespace lys::core::sql
+
+namespace lys::core
+{
+
+struct car
+{
+    int id;
+    std::string name;
+    double price;
+};
+
+} // namespace lys::core
+
+BOOST_HANA_ADAPT_STRUCT(lys::core::car, id, name, price);
