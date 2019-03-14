@@ -34,9 +34,14 @@ constexpr auto convert_to_sqlite_function = boost::hana::make_map( //
 namespace lys::core
 {
 
-struct car
+template <typename T>
+struct entry
 {
     int id;
+};
+
+struct car : entry<car>
+{
     std::string name;
     double price;
     std::optional<std::string> factory;
