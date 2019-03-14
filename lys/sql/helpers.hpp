@@ -52,32 +52,6 @@ constexpr auto make_format(Str str, Sep sep)
     }
 }
 
-template <typename T>
-struct is_optional : std::false_type
-{};
-
-template <typename T>
-struct is_optional<std::optional<T>> : std::true_type
-{};
-
-template <typename T>
-constexpr bool is_optional_v = is_optional<T>::value;
-
-template <typename T>
-struct underlying_type
-{
-    using type = T;
-};
-
-template <typename T>
-struct underlying_type<std::optional<T>>
-{
-    using type = T;
-};
-
-template <typename T>
-using underlying_type_t = typename underlying_type<T>::type;
-
 auto to_str = [](auto &&... x) {
     using namespace boost::hana::literals;
 

@@ -2,12 +2,18 @@
 
 #include <lys/sql/execute.hpp>
 #include <lys/sql/helpers.hpp>
-#include <lys/sql/types.hpp>
+#include <lys/sql/traits.hpp>
 #include <boost/hana/for_each.hpp>
 #include <boost/hana/size.hpp>
 
 namespace lys::core::sql
 {
+
+// template <typename T>
+// int get_id(sqlite3 * db, const T & t)
+// {
+
+// }
 
 template <typename T>
 void select_all(sqlite3 * db, std::vector<T> & results)
@@ -26,7 +32,7 @@ void select_all(sqlite3 * db, std::vector<T> & results)
             constexpr auto type = hana::second(x);
 
             using member_type   = std::decay_t<decltype(type(std::declval<car>()))>;
-            using field_type    = helpers::underlying_type_t<member_type>;
+            using field_type    = underlying_type_t<member_type>;
             constexpr auto func = hana::find(convert_to_sqlite_function, hana::type_c<field_type>).value();
             if constexpr (std::is_same_v<decltype(func(res, idx++)), const unsigned char *>)
             {

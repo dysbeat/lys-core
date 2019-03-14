@@ -2,7 +2,7 @@
 
 #include <lys/sql/execute.hpp>
 #include <lys/sql/helpers.hpp>
-#include <lys/sql/types.hpp>
+#include <lys/sql/traits.hpp>
 #include <boost/hana/insert_range.hpp>
 
 namespace lys::core::sql
@@ -19,10 +19,11 @@ void create_table(sqlite3 * db)
         constexpr auto name = hana::first(x);
         constexpr auto type = hana::second(x);
 
-        using member_type = std::decay_t<decltype(type(std::declval<car>()))>;
-        using field_type  = helpers::underlying_type_t<member_type>;
-        constexpr auto t  = hana::find(convert_to_sqlite_type, hana::type_c<field_type>);
+        using member_type = std::decay_t<decltype(type(std::declval<T>()))>;
+        using field_type  = underlying_type_t<member_type>;
+        using insert_type = std::conditional_t<is_entry_v<field_type>, int, field_type>;
 
+        constexpr auto t = hana::find(convert_to_sqlite_type, hana::type_c<insert_type>);
         return helpers::join<helpers::space_t>(hana::make_tuple(name, t.value()));
     }));
 

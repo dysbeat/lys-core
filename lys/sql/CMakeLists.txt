@@ -6,6 +6,7 @@ add_library(lys_sql
     select.hpp
     table.hpp
     types.hpp
+    traits.hpp
 )
 
 target_link_libraries(lys_sql
