@@ -22,10 +22,22 @@ constexpr auto to_vector = [](auto &&... x) { return std::vector<T>{std::forward
 
 constexpr auto to_tuple = [](auto &&... x) { return std::make_tuple(std::forward<decltype(x)>(x)...); };
 
+template <size_t N, typename Str, typename Sep>
+constexpr auto make_format(Str str, Sep sep)
+{
+    if constexpr (N > 0)
+    {
+        return str + sep + make_format<N - 1>(str, sep);
+    }
+    else
+    {
+        return str;
+    }
+}
+
 auto to_str = [](auto &&... x) {
-    std::array<const char *, sizeof...(x)> array;
-    std::fill(std::begin(array), std::end(array), "\"{}\"");
-    return fmt::format(fmt::format("{}", fmt::join(array, ", ")), std::forward<decltype(x)>(x)...);
+    constexpr auto format = make_format<sizeof...(x) - 1>(BOOST_HANA_STRING("{}"), BOOST_HANA_STRING(", "));
+    return fmt::format(format.c_str(), std::forward<decltype(x)>(x)...);
 };
 
 template <typename T>
