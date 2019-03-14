@@ -17,15 +17,17 @@ void select_all(sqlite3 * db, std::vector<T> & results)
     const size_t member_count = hana::size(T{});
 
     sqlite3_stmt * res;
-    constexpr auto query = helpers::format("SELECT * FROM \"_s\";"_s, helpers::type_name_c<T>);
+    constexpr auto query = helpers::format("SELECT * FROM \"_s\";"_s, helpers::type_name<T>);
     prepare(db, query.c_str(), &res);
 
     while (sqlite3_step(res) == SQLITE_ROW)
     {
         auto fields = hana::transform(accessors, [&res, idx = 0](auto x) mutable { //
             constexpr auto type = hana::second(x);
-            using member_type   = std::decay_t<decltype(type(std::declval<T>()))>;
-            constexpr auto func = hana::find(convert_to_sqlite_function, hana::type_c<member_type>).value();
+
+            using member_type   = std::decay_t<decltype(type(std::declval<car>()))>;
+            using field_type    = helpers::underlying_type_t<member_type>;
+            constexpr auto func = hana::find(convert_to_sqlite_function, hana::type_c<field_type>).value();
             if constexpr (std::is_same_v<decltype(func(res, idx++)), const unsigned char *>)
             {
                 return std::string{reinterpret_cast<const char *>(func(res, idx++))};

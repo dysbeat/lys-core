@@ -20,19 +20,20 @@ void create_table(sqlite3 * db)
         constexpr auto type = hana::second(x);
 
         using member_type = std::decay_t<decltype(type(std::declval<car>()))>;
-        constexpr auto t  = hana::find(convert_to_sqlite_type, hana::type_c<member_type>);
+        using field_type  = helpers::underlying_type_t<member_type>;
+        constexpr auto t  = hana::find(convert_to_sqlite_type, hana::type_c<field_type>);
 
         return helpers::join<helpers::space_t>(hana::make_tuple(name, t.value()));
     }));
 
-    constexpr auto query = helpers::format("CREATE TABLE \"_s\" (_);"_s, helpers::type_name_c<T>, fields);
+    constexpr auto query = helpers::format("CREATE TABLE \"_s\" (_);"_s, helpers::type_name<T>, fields);
     execute(db, query.c_str());
 }
 
 template <typename T>
 void drop_table(sqlite3 * db)
 {
-    constexpr auto query = helpers::format("DROP TABLE \"_s\";"_s, helpers::type_name_c<T>);
+    constexpr auto query = helpers::format("DROP TABLE \"_s\";"_s, helpers::type_name<T>);
     execute(db, query.c_str());
 }
 

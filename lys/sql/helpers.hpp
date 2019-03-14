@@ -5,11 +5,28 @@
 #include <boost/hana/intersperse.hpp>
 #include <boost/hana/string.hpp>
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 #include <array>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <tuple>
 #include <vector>
+
+namespace std
+{
+
+template <typename T>
+std::ostream & operator<<(std::ostream & os, optional<T> o)
+{
+    if (o)
+    {
+        return os << o;
+    }
+    return os << "NULL";
+}
+
+} // namespace std
 
 namespace lys::core::sql::helpers
 {
@@ -34,6 +51,32 @@ constexpr auto make_format(Str str, Sep sep)
         return str;
     }
 }
+
+template <typename T>
+struct is_optional : std::false_type
+{};
+
+template <typename T>
+struct is_optional<std::optional<T>> : std::true_type
+{};
+
+template <typename T>
+constexpr bool is_optional_v = is_optional<T>::value;
+
+template <typename T>
+struct underlying_type
+{
+    using type = T;
+};
+
+template <typename T>
+struct underlying_type<std::optional<T>>
+{
+    using type = T;
+};
+
+template <typename T>
+using underlying_type_t = typename underlying_type<T>::type;
 
 auto to_str = [](auto &&... x) {
     using namespace boost::hana::literals;
@@ -69,10 +112,7 @@ constexpr auto join = [](auto && xs) {
 };
 
 template <typename T>
-const auto type_name = boost::hana::experimental::type_name<std::decay_t<T>>().c_str();
-
-template <typename T>
-const auto type_name_c = boost::hana::experimental::type_name<std::decay_t<T>>();
+const auto type_name = boost::hana::experimental::type_name<std::decay_t<T>>();
 
 template <typename Fmt, typename... Args>
 constexpr auto format(Fmt /*unused*/, Args... /*unused*/);

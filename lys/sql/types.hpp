@@ -10,6 +10,7 @@
 #include <fmt/format.h>
 #include <sqlite3/sqlite3.h>
 #include <iostream>
+#include <optional>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -38,8 +39,9 @@ struct car
     int id;
     std::string name;
     double price;
+    std::optional<std::string> factory;
 };
 
 } // namespace lys::core
 
-BOOST_HANA_ADAPT_STRUCT(lys::core::car, id, name, price);
+BOOST_HANA_ADAPT_STRUCT(lys::core::car, id, name, price, factory);

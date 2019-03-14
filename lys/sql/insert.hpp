@@ -13,7 +13,7 @@ void insert(sqlite3 * db, const T & t)
     using namespace boost;
     using namespace boost::hana::literals;
 
-    constexpr auto query = helpers::format("INSERT INTO \"_s\" VALUES({});"_s, helpers::type_name_c<T>);
+    constexpr auto query = helpers::format("INSERT INTO \"_s\" VALUES({});"_s, helpers::type_name<T>);
     const auto values    = hana::unpack(hana::members(t), helpers::to_str);
 
     execute(db, fmt::format(query.c_str(), values.c_str()));
