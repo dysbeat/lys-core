@@ -16,11 +16,12 @@
 
 namespace lys::core::sql
 {
+using namespace boost::hana::literals;
 
 constexpr auto convert_to_sqlite_type = boost::hana::make_map( //
-    boost::hana::make_pair(boost::hana::type_c<std::string>, BOOST_HANA_STRING("TEXT")),
-    boost::hana::make_pair(boost::hana::type_c<int>, BOOST_HANA_STRING("INT")),
-    boost::hana::make_pair(boost::hana::type_c<double>, BOOST_HANA_STRING("REAL")));
+    boost::hana::make_pair(boost::hana::type_c<std::string>, "TEXT"_s),
+    boost::hana::make_pair(boost::hana::type_c<int>, "INT"_s),
+    boost::hana::make_pair(boost::hana::type_c<double>, "REAL"_s));
 
 constexpr auto convert_to_sqlite_function = boost::hana::make_map( //
     boost::hana::make_pair(boost::hana::type_c<std::string>, sqlite3_column_text),

@@ -17,6 +17,10 @@ else()
     set(Dynload_LIBRARY "")
 endif()
 
+add_definitions(
+    -DBOOST_HANA_CONFIG_ENABLE_STRING_UDL
+)
+
 include_directories(SYSTEM
     ${CMAKE_SOURCE_DIR}/thirdparty/boost
 )

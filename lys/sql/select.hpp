@@ -17,7 +17,7 @@ void select_all(sqlite3 * db, std::vector<T> & results)
     const size_t member_count = hana::size(T{});
 
     sqlite3_stmt * res;
-    constexpr auto query = helpers::format(BOOST_HANA_STRING("SELECT * FROM \"_s\";"), helpers::type_name_c<T>);
+    constexpr auto query = helpers::format("SELECT * FROM \"_s\";"_s, helpers::type_name_c<T>);
     prepare(db, query.c_str(), &res);
 
     while (sqlite3_step(res) == SQLITE_ROW)

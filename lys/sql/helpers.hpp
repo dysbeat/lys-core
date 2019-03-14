@@ -36,7 +36,9 @@ constexpr auto make_format(Str str, Sep sep)
 }
 
 auto to_str = [](auto &&... x) {
-    constexpr auto format = make_format<sizeof...(x) - 1>(BOOST_HANA_STRING("{}"), BOOST_HANA_STRING(", "));
+    using namespace boost::hana::literals;
+
+    constexpr auto format = make_format<sizeof...(x) - 1>("{}"_s, ", "_s);
     return fmt::format(format.c_str(), std::forward<decltype(x)>(x)...);
 };
 

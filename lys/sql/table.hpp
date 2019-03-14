@@ -25,14 +25,14 @@ void create_table(sqlite3 * db)
         return helpers::join<helpers::space_t>(hana::make_tuple(name, t.value()));
     }));
 
-    constexpr auto query = helpers::format(BOOST_HANA_STRING("CREATE TABLE \"_s\" (_);"), helpers::type_name_c<T>, fields);
+    constexpr auto query = helpers::format("CREATE TABLE \"_s\" (_);"_s, helpers::type_name_c<T>, fields);
     execute(db, query.c_str());
 }
 
 template <typename T>
 void drop_table(sqlite3 * db)
 {
-    constexpr auto query = helpers::format(BOOST_HANA_STRING("DROP TABLE \"_s\";"), helpers::type_name_c<T>);
+    constexpr auto query = helpers::format("DROP TABLE \"_s\";"_s, helpers::type_name_c<T>);
     execute(db, query.c_str());
 }
 
