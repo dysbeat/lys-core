@@ -1,6 +1,9 @@
 #pragma once
 
 #include <boost/hana/experimental/type_name.hpp>
+#include <boost/hana/fold.hpp>
+#include <boost/hana/intersperse.hpp>
+#include <boost/hana/string.hpp>
 #include <fmt/format.h>
 #include <array>
 #include <string>
@@ -45,7 +48,52 @@ auto from_str(std::string str)
     }
 }
 
+template <typename Sep = decltype(boost::hana::string_c<>)>
+constexpr auto join = [](auto && xs) {
+    using namespace boost;
+    return hana::fold(hana::intersperse(std::forward<decltype(xs)>(xs), Sep{}), hana::string_c<>, hana::_ + hana::_);
+};
+
 template <typename T>
 const auto type_name = boost::hana::experimental::type_name<std::decay_t<T>>().c_str();
+
+template <typename T>
+const auto type_name_c = boost::hana::experimental::type_name<std::decay_t<T>>();
+
+template <typename Fmt, typename... Args>
+constexpr auto format(Fmt /*unused*/, Args... /*unused*/);
+
+template <char Char1, char... Chars>
+constexpr auto first_char()
+{
+    return Char1;
+}
+
+template <char Char1, char... Chars>
+constexpr auto string_rest()
+{
+    return boost::hana::string<Chars...>{};
+}
+
+template <template <char...> typename Fmt, char... Chars>
+constexpr auto format(Fmt<Chars...> fmt)
+{
+    return fmt;
+}
+
+template <template <char...> typename Fmt, char... Chars, typename Arg1, typename... Args>
+constexpr auto format(Fmt<Chars...> /*unused*/, Arg1 arg1, Args... args)
+{
+    static_assert(sizeof...(Chars) > 0);
+    constexpr auto c = first_char<Chars...>();
+    if constexpr (c == '_')
+    {
+        return arg1 + format(string_rest<Chars...>(), args...);
+    }
+    else
+    {
+        return boost::hana::string<c>{} + format(string_rest<Chars...>(), arg1, args...);
+    }
+}
 
 } // namespace lys::core::sql::helpers
