@@ -8,7 +8,7 @@ namespace lys::core::sql
 {
 
 template <typename T>
-void insert(sqlite3 * db, T t)
+void insert(sqlite3 * db, const T & t)
 {
     using namespace boost;
     using namespace boost::hana::literals;
@@ -17,6 +17,12 @@ void insert(sqlite3 * db, T t)
     const auto values    = hana::unpack(hana::members(t), helpers::to_str);
 
     execute(db, fmt::format(query.c_str(), values.c_str()));
+}
+
+template <template <class...> class Container, typename T>
+void insert(sqlite3 * db, const Container<T> & container)
+{
+    std::for_each(std::begin(container), std::end(container), [db](const auto & t) { insert(db, t); });
 }
 
 } // namespace lys::core::sql

@@ -28,10 +28,8 @@ int main()
         {8, "Volkswagen", 21600} //
     };
 
-    for (const car & c : cars)
-    {
-        sql::insert<car>(db, c);
-    }
+    sql::insert(db, car{0, "Mazda", 12000});
+    sql::insert(db, cars);
 
     std::vector<car> results;
     sql::select_all<car>(db, results);
