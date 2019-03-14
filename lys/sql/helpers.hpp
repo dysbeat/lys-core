@@ -96,4 +96,10 @@ constexpr auto format(Fmt<Chars...> /*unused*/, Arg1 arg1, Args... args)
     }
 }
 
+constexpr auto space = boost::hana::string_c<' '>;
+using space_t        = decltype(space);
+
+constexpr auto comma_sep = boost::hana::string_c<',', ' '>;
+using comma_sep_t        = decltype(comma_sep);
+
 } // namespace lys::core::sql::helpers

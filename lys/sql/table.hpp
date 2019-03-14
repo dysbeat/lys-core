@@ -15,15 +15,14 @@ void create_table(sqlite3 * db)
     using namespace hana::literals;
     constexpr auto accessors = hana::accessors<T>();
 
-    auto fields = helpers::join<decltype(boost::hana::string_c<',', ' '>)>(hana::transform(accessors, [](auto x) {
-        constexpr auto name  = hana::first(x);
-        constexpr auto type  = hana::second(x);
-        constexpr auto space = hana::string_c<' '>;
+    auto fields = helpers::join<helpers::comma_sep_t>(hana::transform(accessors, [](auto x) {
+        constexpr auto name = hana::first(x);
+        constexpr auto type = hana::second(x);
 
         using member_type = std::decay_t<decltype(type(std::declval<car>()))>;
         constexpr auto t  = hana::find(convert_to_sqlite_type, hana::type_c<member_type>);
 
-        return helpers::join<decltype(boost::hana::string_c<' '>)>(hana::make_tuple(name, t.value()));
+        return helpers::join<helpers::space_t>(hana::make_tuple(name, t.value()));
     }));
 
     constexpr auto query = helpers::format(BOOST_HANA_STRING("CREATE TABLE \"_s\" (_);"), helpers::type_name_c<T>, fields);
