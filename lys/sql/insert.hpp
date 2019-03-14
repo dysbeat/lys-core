@@ -10,8 +10,9 @@ namespace lys::core::sql
 template <typename T>
 void insert(sqlite3 * db, T t)
 {
-    const auto values = boost::hana::unpack(boost::hana::members(t), helpers::to_str);
-    execute(db, fmt::format("INSERT INTO \"{}s\" VALUES({});", helpers::type_name<T>, values));
+    constexpr auto query = helpers::format(BOOST_HANA_STRING("INSERT INTO \"_s\" VALUES({});"), helpers::type_name_c<T>);
+    const auto values    = boost::hana::unpack(boost::hana::members(t), helpers::to_str);
+    execute(db, fmt::format(query.c_str(), values.c_str()));
 }
 
 } // namespace lys::core::sql

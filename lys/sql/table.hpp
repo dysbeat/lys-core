@@ -3,6 +3,7 @@
 #include <lys/sql/execute.hpp>
 #include <lys/sql/helpers.hpp>
 #include <lys/sql/types.hpp>
+#include <boost/hana/insert_range.hpp>
 
 namespace lys::core::sql
 {
@@ -11,29 +12,29 @@ template <typename T>
 void create_table(sqlite3 * db)
 {
     using namespace boost;
+    using namespace hana::literals;
     constexpr auto accessors = hana::accessors<T>();
 
-    constexpr auto fields = hana::unpack( //
-        hana::transform(accessors,
-            [](auto x) {
-                constexpr auto name  = hana::first(x);
-                constexpr auto type  = hana::second(x);
-                constexpr auto space = hana::string_c<' '>;
+    auto fields = helpers::join<decltype(boost::hana::string_c<',', ' '>)>(hana::transform(accessors, [](auto x) {
+        constexpr auto name  = hana::first(x);
+        constexpr auto type  = hana::second(x);
+        constexpr auto space = hana::string_c<' '>;
 
-                using member_type = std::decay_t<decltype(type(std::declval<T>()))>;
-                constexpr auto t  = hana::find(convert_to_sqlite_type, hana::type_c<member_type>);
+        using member_type = std::decay_t<decltype(type(std::declval<car>()))>;
+        constexpr auto t  = hana::find(convert_to_sqlite_type, hana::type_c<member_type>);
 
-                return (name + space + t.value()).c_str();
-            }),
-        helpers::to_array<const char *>);
+        return helpers::join<decltype(boost::hana::string_c<' '>)>(hana::make_tuple(name, t.value()));
+    }));
 
-    execute(db, fmt::format("CREATE TABLE \"{}s\" ({});", helpers::type_name<T>, fmt::join(fields, ", ")));
+    constexpr auto query = helpers::format(BOOST_HANA_STRING("CREATE TABLE \"_s\" (_);"), helpers::type_name_c<T>, fields);
+    execute(db, query.c_str());
 }
 
 template <typename T>
 void drop_table(sqlite3 * db)
 {
-    execute(db, fmt::format("DROP TABLE \"{}s\";", helpers::type_name<T>));
+    constexpr auto query = helpers::format(BOOST_HANA_STRING("DROP TABLE \"_s\";"), helpers::type_name_c<T>);
+    execute(db, query.c_str());
 }
 
 } // namespace lys::core::sql
