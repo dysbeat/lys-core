@@ -1,21 +1,14 @@
-#include <lys/sql/execute.hpp>
-#include <lys/sql/insert.hpp>
-#include <lys/sql/select.hpp>
-#include <lys/sql/table.hpp>
-#include <lys/sql/types.hpp>
+#include <lys/sql/db.hpp>
 #include <iostream>
-#include <stdexcept>
 
 int main()
 {
-    sqlite3 * db;
-    auto err = sqlite3_open(":memory:", &db);
-    if (err) std::runtime_error(sqlite3_errstr(err));
-
     using namespace lys::core;
 
-    sql::drop_table<car>(db);
-    sql::create_table<car>(db);
+    auto db = sql::make_db();
+
+    db.drop_table<car>();
+    db.create_table<car>();
 
     std::vector<car> cars{
         {"Audi", 52642},      //
@@ -28,11 +21,11 @@ int main()
         {"Volkswagen", 21600} //
     };
 
-    sql::insert(db, car{"Mazda", 12000});
-    sql::insert(db, cars);
+    db.insert(car{"Mazda", 12000});
+    db.insert(cars);
 
     std::vector<car> results;
-    sql::select_all<car>(db, results);
+    db.select(results);
 
     fmt::print("result count: {}\n", results.size());
     for (const car & c : results)
@@ -54,6 +47,4 @@ int main()
     // {
     //     fmt::print("result: ({}, {}, {})\n", c.id, c.name, c.price);
     // }
-
-    sqlite3_close(db);
 }
