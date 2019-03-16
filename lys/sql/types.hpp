@@ -35,12 +35,13 @@ namespace lys::core
 {
 
 template <typename T>
-struct entry
+struct entry : T
 {
+    using base_type = T;
     int id;
 };
 
-struct car : entry<car>
+struct car
 {
     std::string name;
     double price;
@@ -49,4 +50,6 @@ struct car : entry<car>
 
 } // namespace lys::core
 
-BOOST_HANA_ADAPT_STRUCT(lys::core::car, id, name, price, factory);
+#define REGISTER_ENTRY(NAME, ...) BOOST_HANA_ADAPT_STRUCT(lys::core::entry<NAME>, __VA_ARGS__, id);
+
+REGISTER_ENTRY(lys::core::car, name, price, factory);

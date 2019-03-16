@@ -18,26 +18,42 @@ int main()
     sql::create_table<car>(db);
 
     std::vector<car> cars{
-        {1, "Audi", 52642},      //
-        {2, "Mercedes", 57127},  //
-        {3, "Skoda", 9000},      //
-        {4, "Volvo", 29000},     //
-        {5, "Bentley", 350000},  //
-        {6, "Citroen", 21000},   //
-        {7, "Hummer", 41400},    //
-        {8, "Volkswagen", 21600} //
+        {"Audi", 52642},      //
+        {"Mercedes", 57127},  //
+        {"Skoda", 9000},      //
+        {"Volvo", 29000},     //
+        {"Bentley", 350000},  //
+        {"Citroen", 21000},   //
+        {"Hummer", 41400},    //
+        {"Volkswagen", 21600} //
     };
 
-    sql::insert(db, car{0, "Mazda", 12000});
+    sql::insert(db, car{"Mazda", 12000});
     sql::insert(db, cars);
 
     std::vector<car> results;
     sql::select_all<car>(db, results);
 
+    fmt::print("result count: {}\n", results.size());
     for (const car & c : results)
     {
-        fmt::print("result: ({}, {}, {})\n", c.id, c.name, c.price);
+        fmt::print("result: ({}, {})\n", c.name, c.price);
     }
+
+    fmt::print("\n--------------------\n");
+
+    // results.clear();
+
+    // // db.insert(car{})
+    // // db.insert(cars)
+    // // db.select_where<car>("id < 3");
+    // db | select | where(&car::name) == "Audi"
+    // // db.select_where(&car::id, eq, 3)
+
+    // for (const car & c : results)
+    // {
+    //     fmt::print("result: ({}, {}, {})\n", c.id, c.name, c.price);
+    // }
 
     sqlite3_close(db);
 }
