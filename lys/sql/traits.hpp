@@ -44,4 +44,28 @@ struct is_entry : std::conditional_t<std::is_base_of_v<entry<T>, T>, std::true_t
 template <typename T>
 constexpr bool is_entry_v = is_entry<T>::value;
 
+template <class T>
+struct get_member_pointer_base;
+
+template <class T, class U>
+struct get_member_pointer_base<T U::*>
+{
+    using type = U;
+};
+
+template <typename T>
+using get_member_pointer_base_t = typename get_member_pointer_base<T>::type;
+
+template <class T>
+struct get_member_pointed_to;
+
+template <class T, class U>
+struct get_member_pointed_to<T U::*>
+{
+    using type = T;
+};
+
+template <typename T>
+using get_member_pointed_to_t = typename get_member_pointed_to<T>::type;
+
 } // namespace lys::core
