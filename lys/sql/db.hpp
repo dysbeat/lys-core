@@ -53,6 +53,8 @@ db make_db()
     auto err = sqlite3_open(":memory:", &d._db);
     if (err != SQLITE_OK) std::runtime_error(sqlite3_errstr(err));
 
+    sqlite3_extended_result_codes(d._db, 1);
+
     return d;
 }
 } // namespace lys::core::sql
