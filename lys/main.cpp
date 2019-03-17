@@ -21,6 +21,7 @@ int main()
 
     db.insert(car{"Mazda", "Rx7", 22000});
     db.insert(car{"Mazda", "mx5", 12000});
+    db.insert(car{"Mazda", "mx5", 12000});
     db.insert(cars);
 
     std::vector<car> results;

@@ -119,8 +119,57 @@ auto select(sqlite3 * db, std::vector<T> & results, const where_result & where)
 template <typename T>
 int get_id(sqlite3 * db, const T & t)
 {
+    using namespace boost;
+    using namespace hana::literals;
+
     sqlite3_stmt * res;
-    constexpr auto query = helpers::format("SELECT * FROM \"_s\" WHERE;"_s, helpers::type_name<T>);
+
+    constexpr auto accessors        = hana::accessors<entry<T>>();
+    constexpr auto values_accessors = hana::drop_back(accessors, hana::int_c<1>);
+
+    auto fields = hana::transform(values_accessors, [value = entry<T>{t}](auto x) {
+        constexpr auto key = hana::first(x);
+        constexpr auto acc = hana::second(x);
+
+        return fmt::format("\"{}\" = \"{}\"", key.c_str(), acc(value));
+    });
+
+    constexpr auto query_prefix = helpers::format("SELECT * FROM \"_s\" WHERE "_s, helpers::type_name<T>);
+    const auto query_values     = hana::unpack(fields, [](auto &&... x) {
+        std::vector<std::string> values{std::forward<decltype(x)>(x)...};
+        return fmt::format("{}", fmt::join(values, " and "));
+    });
+
+    const auto query = fmt::format("{} {};", query_prefix.c_str(), query_values);
+    prepare(db, query, &res);
+
+    entry<T> e;
+    std::size_t count = 0;
+    while (sqlite3_step(res) == SQLITE_ROW)
+    {
+        auto values = hana::transform(accessors, [&res, idx = 0](auto x) mutable { //
+            constexpr auto type = hana::second(x);
+
+            using member_type   = std::decay_t<decltype(type(std::declval<entry<T>>()))>;
+            using field_type    = underlying_type_t<member_type>;
+            constexpr auto func = hana::find(convert_to_sqlite_function, hana::type_c<field_type>).value();
+            if constexpr (std::is_same_v<decltype(func(res, idx++)), const unsigned char *>)
+            {
+                return std::string{reinterpret_cast<const char *>(func(res, idx++))};
+            }
+            else
+            {
+                return func(res, idx++);
+            }
+        });
+
+        e = hana::unpack(values, helpers::to_type<entry<T>>);
+        ++count;
+    }
+    assert(count <= 1);
+
+    sqlite3_finalize(res);
+    return (count == 0 ? -1 : e.id);
 }
 
 // template <typename T, typename Accessor, typename V>
