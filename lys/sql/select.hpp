@@ -15,6 +15,21 @@
 namespace lys::core::sql
 {
 
+struct where_result
+{
+    std::string value;
+
+    where_result operator&&(where_result && rhs)
+    {
+        return {fmt::format("{} and {}", std::move(value), std::move(rhs.value))};
+    }
+
+    where_result operator||(where_result && rhs)
+    {
+        return {fmt::format("{} or {}", std::move(value), std::move(rhs.value))};
+    }
+};
+
 template <auto Accessor>
 struct where
 {
@@ -41,20 +56,20 @@ struct where
     }
 
     template <typename U>
-    auto operator<(U u)
+    where_result operator<(U u)
     {
-        return fmt::format("{} < {}", exists(), u);
+        return {fmt::format("{} < {}", exists(), u)};
     }
 
     template <typename U>
-    auto operator==(U u)
+    where_result operator==(U u)
     {
-        return fmt::format("{} = \"{}\"", exists(), u);
+        return {fmt::format("{} = \"{}\"", exists(), u)};
     }
 };
 
 template <typename T>
-auto select(sqlite3 * db, std::vector<T> & results, const std::string & where)
+auto select(sqlite3 * db, std::vector<T> & results, const where_result & where)
 {
     using namespace boost;
     using namespace hana::literals;
@@ -65,7 +80,7 @@ auto select(sqlite3 * db, std::vector<T> & results, const std::string & where)
     constexpr auto query     = helpers::format("SELECT * FROM \"_s\" WHERE "_s, helpers::type_name<T>);
 
     sqlite3_stmt * res;
-    prepare(db, fmt::format("{} {};", query.c_str(), where), &res);
+    prepare(db, fmt::format("{} {};", query.c_str(), where.value), &res);
     while (sqlite3_step(res) == SQLITE_ROW)
     {
         auto fields            = hana::transform(accessors, [&res, idx = 0](auto x) mutable { //

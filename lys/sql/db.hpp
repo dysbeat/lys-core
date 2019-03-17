@@ -33,8 +33,8 @@ struct db
         sql::drop_table<T>(_db);
     }
 
-    template <typename T, typename Where>
-    auto select(std::vector<T> & results, const Where & where)
+    template <typename T>
+    auto select(std::vector<T> & results, const where_result & where)
     {
         sql::select(_db, results, where);
     }

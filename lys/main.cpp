@@ -19,12 +19,12 @@ int main()
         {"Citroen", "C4", 21000}        //
     };
 
-    db.insert(car{"Mazda", "Rx7", 12000});
+    db.insert(car{"Mazda", "Rx7", 22000});
     db.insert(car{"Mazda", "mx5", 12000});
     db.insert(cars);
 
     std::vector<car> results;
-    db.select(results, sql::where<&car::brand>{} == "Audi");
+    db.select(results, sql::where<&car::brand>{} == "Audi" && sql::where<&car::price>{} < 90000);
 
     fmt::print("result count: {}\n", results.size());
     for (const car & c : results)
