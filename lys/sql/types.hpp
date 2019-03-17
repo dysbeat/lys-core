@@ -1,12 +1,15 @@
 #pragma once
 
+#include <lys/sql/helpers.hpp>
 #include <boost/hana/adapt_struct.hpp>
+#include <boost/hana/drop_back.hpp>
 #include <boost/hana/experimental/type_name.hpp>
 #include <boost/hana/for_each.hpp>
 #include <boost/hana/functional/compose.hpp>
 #include <boost/hana/map.hpp>
 #include <boost/hana/pair.hpp>
 #include <boost/hana/string.hpp>
+#include <boost/hana/zip.hpp>
 #include <fmt/format.h>
 #include <sqlite3/sqlite3.h>
 #include <iostream>
@@ -31,15 +34,106 @@ constexpr auto convert_to_sqlite_function = boost::hana::make_map( //
 
 } // namespace lys::core::sql
 
-namespace lys::core
+namespace lys::core::sql
 {
+
+using id_type = int;
 
 template <typename T>
 struct entry : T
 {
     using base_type = T;
-    int id;
+    id_type id;
 };
+
+template <typename T>
+struct is_optional : std::false_type
+{};
+
+template <typename T>
+struct is_optional<std::optional<T>> : std::true_type
+{};
+
+template <typename T>
+constexpr bool is_optional_v = is_optional<T>::value;
+
+template <typename T>
+struct is_entry : std::conditional_t<std::is_base_of_v<sql::entry<T>, T>, std::true_type, std::false_type>
+{};
+
+template <typename T>
+constexpr bool is_entry_v = is_entry<T>::value;
+
+template <typename T>
+struct underlying_type
+{
+    using type = T;
+};
+
+template <typename T>
+struct underlying_type<std::optional<T>>
+{
+    using type = T;
+};
+
+template <typename T>
+struct underlying_type<sql::entry<T>>
+{
+    using type = int;
+};
+
+template <typename T>
+using underlying_type_t = typename underlying_type<T>::type;
+
+template <typename T>
+struct entry_helper
+{
+    using entry_type = entry<T>;
+
+private:
+    // static constexpr auto suppress_
+public:
+    static constexpr auto name = helpers::type_name<typename entry_type::base_type>;
+
+    static constexpr auto entry_accessors = boost::hana::accessors<entry_type>();
+    // accessors are used without the id (which appears last) in most cases
+    static constexpr auto accessors = boost::hana::drop_back(entry_accessors, boost::hana::int_c<1>);
+
+    static constexpr auto entry_keys = boost::hana::concat(
+        boost::hana::make_tuple("id"_s), boost::hana::transform(accessors, [](auto x) { return boost::hana::first(x); }));
+    static constexpr auto keys = boost::hana::drop_front(entry_keys, boost::hana::int_c<1>);
+
+    static constexpr auto entry_sql_types =
+        boost::hana::concat(boost::hana::make_tuple("INTEGER PRIMARY KEY AUTOINCREMENT"_s), boost::hana::transform(accessors, [](auto x) {
+            using namespace boost;
+            using namespace hana::literals;
+
+            constexpr auto type = hana::second(x);
+
+            using member_type = std::decay_t<decltype(type(std::declval<entry_type>()))>;
+            using field_type  = underlying_type_t<member_type>;
+
+            // if field is a user defined type insert id instead of field
+            using insert_type = std::conditional_t<is_entry_v<field_type>, id_type, field_type>;
+
+            constexpr auto t   = hana::find(convert_to_sqlite_type, hana::type_c<insert_type>);
+            using has_optional = std::conditional_t<is_optional_v<member_type>, hana::string<>, decltype("NOT NULL"_s)>;
+            return helpers::join<helpers::space_t>(hana::make_tuple(t.value(), has_optional{}));
+        }));
+    static constexpr auto sql_types = boost::hana::drop_front(entry_sql_types, boost::hana::int_c<1>);
+
+    static constexpr auto entry_zipped_fields = boost::hana::zip(entry_keys, entry_sql_types);
+    static constexpr auto zipped_fields       = boost::hana::zip(keys, sql_types);
+
+    static constexpr auto entry_fields =
+        boost::hana::transform(entry_zipped_fields, [](auto x) { return helpers::join<helpers::space_t>(x); });
+    static constexpr auto fields = boost::hana::drop_front(entry_fields, boost::hana::int_c<1>);
+};
+
+} // namespace lys::core::sql
+
+namespace lys::core
+{
 
 struct car
 {
@@ -51,6 +145,6 @@ struct car
 
 } // namespace lys::core
 
-#define REGISTER_ENTRY(NAME, ...) BOOST_HANA_ADAPT_STRUCT(lys::core::entry<NAME>, __VA_ARGS__, id);
+#define REGISTER_ENTRY(NAME, ...) BOOST_HANA_ADAPT_STRUCT(lys::core::sql::entry<NAME>, __VA_ARGS__, id);
 
 REGISTER_ENTRY(lys::core::car, brand, model, price, factory);
