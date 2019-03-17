@@ -66,6 +66,13 @@ struct where_impl
         // static_assert(decltype(std::declval<R>() == std::declval<U>()), "operation not supported by type");
         return {fmt::format("{} = \"{}\"", exists(), u)};
     }
+
+    template <typename U>
+    where_result like(U u) const
+    {
+        // static_assert(decltype(std::declval<R>() == std::declval<U>()), "operation not supported by type");
+        return {fmt::format("{} LIKE(\"{}\")", exists(), u)};
+    }
 };
 
 template <auto Accessor>
