@@ -11,26 +11,25 @@ int main()
     db.create_table<car>();
 
     std::vector<car> cars{
-        {"Audi", 52642},      //
-        {"Mercedes", 57127},  //
-        {"Skoda", 9000},      //
-        {"Volvo", 29000},     //
-        {"Bentley", 350000},  //
-        {"Citroen", 21000},   //
-        {"Hummer", 41400},    //
-        {"Volkswagen", 21600} //
+        {"Audi", "A1", 52642},          //
+        {"Audi", "A5", 100000},         //
+        {"Mercedes", "class C", 57127}, //
+        {"Skoda", "octavia", 9000},     //
+        {"Volvo", "T", 29000},          //
+        {"Citroen", "C4", 21000}        //
     };
 
-    db.insert(car{"Mazda", 12000});
+    db.insert(car{"Mazda", "Rx7", 12000});
+    db.insert(car{"Mazda", "mx5", 12000});
     db.insert(cars);
 
     std::vector<car> results;
-    db.select(results);
+    db.select(results, sql::where<&car::brand>{} == "Audi");
 
     fmt::print("result count: {}\n", results.size());
     for (const car & c : results)
     {
-        fmt::print("result: ({}, {})\n", c.name, c.price);
+        fmt::print("result: ({}, {})\n", c.brand, c.model, c.price);
     }
 
     fmt::print("\n--------------------\n");

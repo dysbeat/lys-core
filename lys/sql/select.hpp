@@ -5,13 +5,91 @@
 #include <lys/sql/traits.hpp>
 #include <boost/hana/assert.hpp>
 #include <boost/hana/drop_back.hpp>
+#include <boost/hana/find_if.hpp>
 #include <boost/hana/for_each.hpp>
 #include <boost/hana/integral_constant.hpp>
+#include <boost/hana/optional.hpp>
 #include <boost/hana/size.hpp>
 #include <functional>
 
 namespace lys::core::sql
 {
+
+template <auto Accessor>
+struct where
+{
+    static constexpr auto accessor{Accessor};
+
+    using accessor_type   = decltype(Accessor);
+    using result_type     = get_member_pointed_to_t<accessor_type>;
+    using pointed_to_type = get_member_pointer_base_t<accessor_type>;
+
+    using entry_type = entry<pointed_to_type>;
+
+    auto exists()
+    {
+        using namespace boost;
+
+        constexpr auto accessors = hana::accessors<entry_type>();
+
+        using to_find = hana::struct_detail::member_ptr<decltype(Accessor), Accessor>;
+
+        constexpr auto found =
+            hana::find_if(accessors, [](const auto & x) { return std::is_same<std::decay_t<decltype(hana::second(x))>, to_find>{}; });
+        static_assert(!(found == hana::nothing), "member not found");
+        return hana::first(found.value()).c_str();
+    }
+
+    template <typename U>
+    auto operator<(U u)
+    {
+        return fmt::format("{} < {}", exists(), u);
+    }
+
+    template <typename U>
+    auto operator==(U u)
+    {
+        return fmt::format("{} = \"{}\"", exists(), u);
+    }
+};
+
+template <typename T>
+auto select(sqlite3 * db, std::vector<T> & results, const std::string & where)
+{
+    using namespace boost;
+    using namespace hana::literals;
+
+    using entry_type = std::decay_t<entry<T>>;
+
+    constexpr auto accessors = hana::accessors<entry_type>();
+    constexpr auto query     = helpers::format("SELECT * FROM \"_s\" WHERE "_s, helpers::type_name<T>);
+
+    sqlite3_stmt * res;
+    prepare(db, fmt::format("{} {};", query.c_str(), where), &res);
+    while (sqlite3_step(res) == SQLITE_ROW)
+    {
+        auto fields            = hana::transform(accessors, [&res, idx = 0](auto x) mutable { //
+            constexpr auto type = hana::second(x);
+
+            using member_type   = std::decay_t<decltype(type(std::declval<entry_type>()))>;
+            using field_type    = underlying_type_t<member_type>;
+            constexpr auto func = hana::find(convert_to_sqlite_function, hana::type_c<field_type>).value();
+            if constexpr (std::is_same_v<decltype(func(res, idx++)), const unsigned char *>)
+            {
+                return std::string{reinterpret_cast<const char *>(func(res, idx++))};
+            }
+            else
+            {
+                return func(res, idx++);
+            }
+        });
+        auto fields_without_id = hana::drop_back(fields, hana::size_c<1>);
+        auto values            = hana::unpack(fields_without_id, helpers::to_type<typename entry_type::base_type>);
+        results.push_back(values);
+    }
+
+    sqlite3_finalize(res);
+}
 
 template <typename T>
 int get_id(sqlite3 * db, const T & t)

@@ -33,10 +33,10 @@ struct db
         sql::drop_table<T>(_db);
     }
 
-    template <typename T>
-    void select(std::vector<T> & results)
+    template <typename T, typename Where>
+    auto select(std::vector<T> & results, const Where & where)
     {
-        sql::select_all(_db, results);
+        sql::select(_db, results, where);
     }
 
     friend db make_db();

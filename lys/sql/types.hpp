@@ -43,7 +43,8 @@ struct entry : T
 
 struct car
 {
-    std::string name;
+    std::string brand;
+    std::string model;
     double price;
     std::optional<std::string> factory;
 };
@@ -52,4 +53,4 @@ struct car
 
 #define REGISTER_ENTRY(NAME, ...) BOOST_HANA_ADAPT_STRUCT(lys::core::entry<NAME>, __VA_ARGS__, id);
 
-REGISTER_ENTRY(lys::core::car, name, price, factory);
+REGISTER_ENTRY(lys::core::car, brand, model, price, factory);
