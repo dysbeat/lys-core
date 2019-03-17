@@ -24,7 +24,7 @@ int main()
     db.insert(cars);
 
     std::vector<car> results;
-    db.select(results, sql::where<&car::brand>{} == "Audi" && sql::where<&car::price>{} < 90000);
+    db.select(results, sql::where<&car::brand> == "Audi" && sql::where<&car::price> < 90000);
 
     fmt::print("result count: {}\n", results.size());
     for (const car & c : results)
