@@ -93,7 +93,7 @@ auto select(sqlite3 * db, std::vector<T> & results, const where_result & where)
     prepare(db, fmt::format("{} {};", query.c_str(), where.value), &res);
     while (sqlite3_step(res) == SQLITE_ROW)
     {
-        auto fields            = hana::transform(accessors, [&res, idx = 0](auto x) mutable { //
+        auto fields = hana::transform(hana::drop_back(accessors, hana::int_c<1>), [&res, idx = 1](auto x) mutable { //
             constexpr auto type = hana::second(x);
 
             using member_type   = std::decay_t<decltype(type(std::declval<entry_type>()))>;
@@ -101,15 +101,17 @@ auto select(sqlite3 * db, std::vector<T> & results, const where_result & where)
             constexpr auto func = hana::find(convert_to_sqlite_function, hana::type_c<field_type>).value();
             if constexpr (std::is_same_v<decltype(func(res, idx++)), const unsigned char *>)
             {
-                return std::string{reinterpret_cast<const char *>(func(res, idx++))};
+                auto value = reinterpret_cast<const char *>(func(res, idx++));
+                if (value) return std::string{value};
+                return std::string{};
             }
             else
             {
                 return func(res, idx++);
             }
         });
-        auto fields_without_id = hana::drop_back(fields, hana::size_c<1>);
-        auto values            = hana::unpack(fields_without_id, helpers::to_type<typename entry_type::base_type>);
+
+        auto values = hana::unpack(fields, helpers::to_type<typename entry_type::base_type>);
         results.push_back(values);
     }
 

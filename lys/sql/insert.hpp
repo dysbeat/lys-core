@@ -17,8 +17,14 @@ void insert(sqlite3 * db, const T & t)
 
     using entry_type = entry<std::decay_t<T>>;
 
-    constexpr auto query = helpers::format("INSERT INTO \"_s\" VALUES({});"_s, helpers::type_name<typename entry_type::base_type>);
-    const auto values    = hana::unpack(hana::members(entry_type{t}), helpers::to_str);
+    constexpr auto accessors = hana::accessors<entry_type>();
+
+    constexpr auto keys     = hana::drop_back(hana::transform(accessors, [](auto x) { return hana::first(x); }), hana::int_c<1>);
+    constexpr auto keys_str = helpers::join<helpers::comma_sep_t>(keys);
+
+    constexpr auto query =
+        helpers::format("INSERT INTO \"_s\"(_) VALUES({});"_s, helpers::type_name<typename entry_type::base_type>, keys_str);
+    const auto values = hana::unpack(hana::drop_back(hana::members(entry_type{t}), hana::int_c<1>), helpers::to_str);
 
     if (get_id(db, t) == -1)
     {

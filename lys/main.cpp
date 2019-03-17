@@ -7,7 +7,7 @@ int main()
 
     auto db = sql::make_db();
 
-    db.drop_table<car>();
+    // db.drop_table<car>();
     db.create_table<car>();
 
     std::vector<car> cars{
@@ -30,7 +30,7 @@ int main()
     fmt::print("result count: {}\n", results.size());
     for (const car & c : results)
     {
-        fmt::print("result: ({}, {})\n", c.brand, c.model, c.price);
+        fmt::print("result: ({}, {}, {})\n", c.brand, c.model, c.price);
     }
 
     fmt::print("\n--------------------\n");

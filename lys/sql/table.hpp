@@ -18,26 +18,31 @@ void create_table(sqlite3 * db)
 
     constexpr auto accessors = hana::accessors<entry_type>();
 
-    auto fields = helpers::join<helpers::comma_sep_t>(hana::transform(accessors, [](auto x) {
-        constexpr auto name = hana::first(x);
-        constexpr auto type = hana::second(x);
+    auto fields = helpers::join<helpers::comma_sep_t>(                           //
+        hana::concat(hana::make_tuple("id INTEGER PRIMARY KEY AUTOINCREMENT"_s), //
+            hana::drop_back(                                                     //
+                hana::transform(accessors,
+                    [](auto x) {
+                        constexpr auto name = hana::first(x);
+                        constexpr auto type = hana::second(x);
 
-        using member_type = std::decay_t<decltype(type(std::declval<entry_type>()))>;
-        using field_type  = underlying_type_t<member_type>;
+                        using member_type = std::decay_t<decltype(type(std::declval<entry_type>()))>;
+                        using field_type  = underlying_type_t<member_type>;
 
-        // if field is a user defined type insert id instead of field
-        using insert_type = std::conditional_t<is_entry_v<field_type>, int, field_type>;
+                        // if field is a user defined type insert id instead of field
+                        using insert_type = std::conditional_t<is_entry_v<field_type>, int, field_type>;
 
-        constexpr auto t = hana::find(convert_to_sqlite_type, hana::type_c<insert_type>);
-        if constexpr (is_optional_v<member_type>)
-        {
-            return helpers::join<helpers::space_t>(hana::make_tuple(name, t.value()));
-        }
-        else
-        {
-            return helpers::join<helpers::space_t>(hana::make_tuple(name, t.value(), "NOT NULL"_s));
-        }
-    }));
+                        constexpr auto t = hana::find(convert_to_sqlite_type, hana::type_c<insert_type>);
+                        if constexpr (is_optional_v<member_type>)
+                        {
+                            return helpers::join<helpers::space_t>(hana::make_tuple(name, t.value()));
+                        }
+                        else
+                        {
+                            return helpers::join<helpers::space_t>(hana::make_tuple(name, t.value(), "NOT NULL"_s));
+                        }
+                    }),
+                hana::int_c<1>)));
 
     constexpr auto query = helpers::format("CREATE TABLE \"_s\" (_);"_s, helpers::type_name<typename entry_type::base_type>, fields);
     execute(db, query.c_str());
