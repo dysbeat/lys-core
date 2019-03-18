@@ -12,19 +12,12 @@ namespace lys::core::sql
 template <typename T>
 void insert(sqlite3 * db, const T & t)
 {
-    using namespace boost;
-    using namespace boost::hana::literals;
+    using type_helper = entry_helper<T>;
 
-    using entry_type = entry<std::decay_t<T>>;
+    constexpr auto keys_str = helpers::join<helpers::comma_sep_t>(type_helper::keys);
 
-    constexpr auto accessors = hana::accessors<entry_type>();
-
-    // constexpr auto keys     = hana::drop_back(hana::transform(accessors, [](auto x) { return hana::first(x); }), hana::int_c<1>);
-    constexpr auto keys_str = helpers::join<helpers::comma_sep_t>(entry_helper<T>::keys);
-
-    constexpr auto query =
-        helpers::format("INSERT INTO \"_s\"(_) VALUES({});"_s, helpers::type_name<typename entry_type::base_type>, keys_str);
-    const auto values = hana::unpack(hana::drop_back(hana::members(entry_type{t}), hana::int_c<1>), helpers::to_str);
+    constexpr auto query = helpers::format("INSERT INTO \"_s\"(_) VALUES({});"_s, type_helper::name, keys_str);
+    const auto values    = boost::hana::unpack(type_helper::members(t), helpers::to_str);
 
     if (get_id(db, t) == -1)
     {
