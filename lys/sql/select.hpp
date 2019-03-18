@@ -79,7 +79,31 @@ template <auto Accessor>
 constexpr where_impl<Accessor> where{};
 
 template <typename T>
-auto select(sqlite3 * db, std::vector<T> & results, const where_result & where)
+T select_id(sqlite3 * db, int id)
+{
+    using namespace boost;
+    using namespace hana::literals;
+
+    using type_helper    = entry_helper<T>;
+    constexpr auto query = helpers::format("SELECT * FROM \"_s\" WHERE id = "_s, type_helper::name);
+
+    sqlite3_stmt * res;
+    T t{};
+    prepare(db, fmt::format("{} {};", query.c_str(), id), &res);
+    while (sqlite3_step(res) == SQLITE_ROW)
+    {
+        auto values = hana::transform(type_helper::sql_calls, [&res, idx = 1](auto call) mutable { //
+            return call(res, idx++);
+        });
+
+        t = hana::unpack(values, helpers::to_type<T>);
+    }
+    sqlite3_finalize(res);
+    return t;
+}
+
+template <typename T>
+auto select(sqlite3 * db, std::vector<T> & results, const where_result & what)
 {
     using namespace boost;
     using namespace hana::literals;
@@ -89,15 +113,34 @@ auto select(sqlite3 * db, std::vector<T> & results, const where_result & where)
     constexpr auto query = helpers::format("SELECT * FROM \"_s\" WHERE "_s, type_helper::name);
 
     sqlite3_stmt * res;
-    prepare(db, fmt::format("{} {};", query.c_str(), where.value), &res);
+    prepare(db, fmt::format("{} {};", query.c_str(), what.value), &res);
     while (sqlite3_step(res) == SQLITE_ROW)
     {
         auto fields = hana::transform(type_helper::sql_calls, [&res, idx = 1](auto call) mutable { //
             return call(res, idx++);
         });
 
-        auto values = hana::unpack(fields, helpers::to_type<T>);
-        results.push_back(values);
+        T t;
+        auto mapping = hana::zip(type_helper::members(t), fields);
+
+        auto values = hana::transform(mapping, [db](auto x) {
+            auto type  = hana::at_c<0>(x);
+            auto value = hana::at_c<1>(x);
+
+            using member_type = std::decay_t<decltype(type)>;
+            using field_type  = underlying_type_t<member_type>;
+
+            if constexpr (is_entry_v<field_type>)
+            {
+                return select_id<field_type>(db, value);
+            }
+            else
+            {
+                return value;
+            }
+        });
+
+        results.push_back(hana::unpack(values, helpers::to_type<T>));
     }
 
     sqlite3_finalize(res);
@@ -113,11 +156,20 @@ int get_id(sqlite3 * db, const T & t)
 
     using type_helper = entry_helper<T>;
 
-    auto fields = hana::transform(type_helper::accessors, [value = entry<T>{t}](auto x) {
+    auto fields = hana::transform(type_helper::accessors, [db, value = entry<T>{t}](auto x) {
         constexpr auto key = hana::first(x);
         constexpr auto acc = hana::second(x);
 
-        return fmt::format("\"{}\"={}", key.c_str(), helpers::to_value(acc(value)));
+        auto v = acc(value);
+        if constexpr (is_entry_v<std::decay_t<decltype(v)>>)
+        {
+            auto id = get_id(db, v);
+            return fmt::format("\"{}\"={}", key.c_str(), helpers::to_value(id));
+        }
+        else
+        {
+            return fmt::format("\"{}\"={}", key.c_str(), helpers::to_value(v));
+        }
     });
 
     constexpr auto query_prefix = helpers::format("SELECT id FROM \"_s\" WHERE "_s, helpers::type_name<T>);

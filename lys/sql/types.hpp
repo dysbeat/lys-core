@@ -60,7 +60,7 @@ template <typename T>
 constexpr bool is_optional_v = is_optional<T>::value;
 
 template <typename T>
-struct is_entry : std::conditional_t<std::is_base_of_v<sql::entry<T>, T>, std::true_type, std::false_type>
+struct is_entry : std::false_type
 {};
 
 template <typename T>
@@ -116,9 +116,10 @@ public:
 
             using member_type = std::decay_t<decltype(type(std::declval<entry<T>>()))>;
             using field_type  = underlying_type_t<member_type>;
+            using insert_type = std::conditional_t<is_entry_v<field_type>, id_type, field_type>;
 
-            auto call = boost::hana::find(convert_to_sqlite_function, boost::hana::type_c<field_type>).value();
-            if constexpr (std::is_convertible_v<field_type, std::string>)
+            auto call = boost::hana::find(convert_to_sqlite_function, boost::hana::type_c<insert_type>).value();
+            if constexpr (std::is_convertible_v<insert_type, std::string>)
             {
                 return [call](auto res, auto idx) { return reinterpret_cast<const char *>(std::invoke(call, res, idx)); };
             }
@@ -162,16 +163,28 @@ public:
 namespace lys::core
 {
 
+struct factory
+{
+    std::string name;
+};
+
 struct car
 {
     std::string brand;
     std::string model;
     double price;
-    std::optional<std::string> factory;
+    factory factory;
+    std::optional<std::string> suffix;
 };
 
 } // namespace lys::core
 
-#define REGISTER_ENTRY(NAME, ...) BOOST_HANA_ADAPT_STRUCT(lys::core::sql::entry<NAME>, __VA_ARGS__, id);
+#define REGISTER_ENTRY(NAME, ...)                                          \
+    BOOST_HANA_ADAPT_STRUCT(lys::core::sql::entry<NAME>, __VA_ARGS__, id); \
+                                                                           \
+    template <>                                                            \
+    struct lys::core::sql::is_entry<NAME> : std::true_type                 \
+    {}
 
-REGISTER_ENTRY(lys::core::car, brand, model, price, factory);
+REGISTER_ENTRY(lys::core::factory, name);
+REGISTER_ENTRY(lys::core::car, brand, model, price, factory, suffix);

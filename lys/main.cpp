@@ -9,19 +9,20 @@ int main()
 
     // db.drop_table<car>();
     db.create_table<car>();
+    db.create_table<factory>();
 
     std::vector<car> cars{
-        {"Audi", "A1", 52642},          //
-        {"Audi", "A5", 100000},         //
-        {"Mercedes", "class C", 57127}, //
-        {"Skoda", "octavia", 9000},     //
-        {"Volvo", "T", 29000},          //
-        {"Citroen", "C4", 21000}        //
+        {"Audi", "A1", 52642, {"Dunkerque"}},          //
+        {"Audi", "A5", 100000, {"Dunkerque"}},         //
+        {"Mercedes", "class C", 57127, {"Dunkerque"}}, //
+        {"Skoda", "octavia", 9000, {"Dunkerque"}},     //
+        {"Volvo", "T", 29000, {"Dunkerque"}},          //
+        {"Citroen", "C4", 21000, {"Dunkerque"}}        //
     };
 
-    db.insert(car{"Mazda", "Rx7", 22000});
-    db.insert(car{"Mazda", "mx5", 12000});
-    db.insert(car{"Mazda", "mx5", 12000});
+    db.insert(car{"Mazda", "Rx7", 22000, {"Dunkerque"}});
+    db.insert(car{"Mazda", "mx5", 12000, {"Dunkerque"}});
+    db.insert(car{"Mazda", "mx5", 12000, {"Dunkerque"}});
     db.insert(cars);
 
     std::vector<car> results;
