@@ -52,15 +52,41 @@ constexpr auto make_format(Str str, Sep sep)
     }
 }
 
+template <typename T>
+auto to_value(T && t)
+{
+    if constexpr (std::is_convertible_v<T, std::string>)
+    {
+        return fmt::format("\"{}\"", t);
+    }
+    else
+    {
+        return fmt::format("{}", t);
+    }
+}
+
 auto to_str = [](auto &&... x) {
     using namespace boost::hana::literals;
 
-    constexpr auto format = make_format<sizeof...(x) - 1>("\"{}\""_s, ", "_s);
-    return fmt::format(format.c_str(), std::forward<decltype(x)>(x)...);
+    constexpr auto format = make_format<sizeof...(x) - 1>("{}"_s, ", "_s);
+    return fmt::format(format.c_str(), to_value(std::forward<decltype(x)>(x))...);
 };
 
 template <typename T>
-constexpr auto to_type = [](auto &&... x) { return T{std::forward<decltype(x)>(x)...}; };
+auto sanitize(T && t)
+{
+    if constexpr (std::is_same_v<std::decay_t<T>, const char *> || std::is_same_v<std::decay_t<T>, const unsigned char *>)
+    {
+        return (t == nullptr ? "" : t);
+    }
+    else
+    {
+        return t;
+    }
+}
+
+template <typename T>
+constexpr auto to_type = [](auto &&... x) { return T{sanitize(std::forward<decltype(x)>(x))...}; };
 
 template <typename T>
 auto from_str(std::string str)

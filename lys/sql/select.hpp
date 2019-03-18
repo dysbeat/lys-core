@@ -93,7 +93,7 @@ auto select(sqlite3 * db, std::vector<T> & results, const where_result & where)
     while (sqlite3_step(res) == SQLITE_ROW)
     {
         auto fields = hana::transform(type_helper::sql_calls, [&res, idx = 1](auto call) mutable { //
-            return std::invoke(call, res, idx++);
+            return call(res, idx++);
         });
 
         auto values = hana::unpack(fields, helpers::to_type<T>);
@@ -117,7 +117,7 @@ int get_id(sqlite3 * db, const T & t)
         constexpr auto key = hana::first(x);
         constexpr auto acc = hana::second(x);
 
-        return fmt::format("\"{}\" = \"{}\"", key.c_str(), acc(value));
+        return fmt::format("\"{}\"={}", key.c_str(), helpers::to_value(acc(value)));
     });
 
     constexpr auto query_prefix = helpers::format("SELECT id FROM \"_s\" WHERE "_s, helpers::type_name<T>);
