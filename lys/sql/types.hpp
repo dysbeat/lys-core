@@ -12,6 +12,7 @@
 #include <boost/hana/zip.hpp>
 #include <fmt/format.h>
 #include <sqlite3/sqlite3.h>
+#include <functional>
 #include <iostream>
 #include <optional>
 #include <string>
@@ -91,17 +92,39 @@ struct entry_helper
     using entry_type = entry<T>;
 
 private:
-    // static constexpr auto suppress_
+    static constexpr auto drop_last  = [](auto x) { return boost::hana::drop_back(x, boost::hana::int_c<1>); };
+    static constexpr auto drop_first = [](auto x) { return boost::hana::drop_front(x, boost::hana::int_c<1>); };
+
 public:
     static constexpr auto name = helpers::type_name<typename entry_type::base_type>;
 
     static constexpr auto entry_accessors = boost::hana::accessors<entry_type>();
     // accessors are used without the id (which appears last) in most cases
-    static constexpr auto accessors = boost::hana::drop_back(entry_accessors, boost::hana::int_c<1>);
+    static constexpr auto accessors = drop_last(entry_accessors);
 
     static constexpr auto entry_keys = boost::hana::concat(
         boost::hana::make_tuple("id"_s), boost::hana::transform(accessors, [](auto x) { return boost::hana::first(x); }));
-    static constexpr auto keys = boost::hana::drop_front(entry_keys, boost::hana::int_c<1>);
+    static constexpr auto keys = drop_first(entry_keys);
+
+    static constexpr auto entry_sql_calls =
+        boost::hana::concat(boost::hana::make_tuple(sqlite3_column_int), boost::hana::transform(accessors, [](auto x) {
+            constexpr auto type = boost::hana::second(x);
+
+            using member_type = std::decay_t<decltype(type(std::declval<entry<T>>()))>;
+            using field_type  = underlying_type_t<member_type>;
+
+            auto call = boost::hana::find(convert_to_sqlite_function, boost::hana::type_c<field_type>).value();
+            if constexpr (std::is_convertible_v<field_type, std::string>)
+            {
+                return [call](auto res, auto idx) { return reinterpret_cast<const char *>(std::invoke(call, res, idx)); };
+            }
+            else
+            {
+                return call;
+            }
+            // return boost::hana::find(convert_to_sqlite_function, boost::hana::type_c<field_type>).value();
+        }));
+    static constexpr auto sql_calls = drop_first(entry_sql_calls);
 
     static constexpr auto entry_sql_types =
         boost::hana::concat(boost::hana::make_tuple("INTEGER PRIMARY KEY AUTOINCREMENT"_s), boost::hana::transform(accessors, [](auto x) {
@@ -120,14 +143,14 @@ public:
             using has_optional = std::conditional_t<is_optional_v<member_type>, hana::string<>, decltype("NOT NULL"_s)>;
             return helpers::join<helpers::space_t>(hana::make_tuple(t.value(), has_optional{}));
         }));
-    static constexpr auto sql_types = boost::hana::drop_front(entry_sql_types, boost::hana::int_c<1>);
+    static constexpr auto sql_types = drop_first(entry_sql_types);
 
     static constexpr auto entry_zipped_fields = boost::hana::zip(entry_keys, entry_sql_types);
     static constexpr auto zipped_fields       = boost::hana::zip(keys, sql_types);
 
     static constexpr auto entry_fields =
         boost::hana::transform(entry_zipped_fields, [](auto x) { return helpers::join<helpers::space_t>(x); });
-    static constexpr auto fields = boost::hana::drop_front(entry_fields, boost::hana::int_c<1>);
+    static constexpr auto fields = drop_first(entry_fields);
 };
 
 } // namespace lys::core::sql
