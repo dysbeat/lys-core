@@ -7,6 +7,7 @@
 #include <boost/hana/for_each.hpp>
 #include <boost/hana/functional/compose.hpp>
 #include <boost/hana/map.hpp>
+#include <boost/hana/members.hpp>
 #include <boost/hana/pair.hpp>
 #include <boost/hana/string.hpp>
 #include <boost/hana/zip.hpp>
@@ -101,6 +102,9 @@ public:
     static constexpr auto entry_accessors = boost::hana::accessors<entry_type>();
     // accessors are used without the id (which appears last) in most cases
     static constexpr auto accessors = drop_last(entry_accessors);
+
+    static constexpr auto entry_members = [](auto && t) { return boost::hana::members(entry_type{t}); };
+    static constexpr auto members       = [](auto && t) { return drop_last(boost::hana::members(entry_type{t})); };
 
     static constexpr auto entry_keys = boost::hana::concat(
         boost::hana::make_tuple("id"_s), boost::hana::transform(accessors, [](auto x) { return boost::hana::first(x); }));
