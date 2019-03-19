@@ -189,7 +189,7 @@ int get_id(sqlite3 * db, const T & t)
         }
     });
 
-    constexpr auto query_prefix = helpers::format("SELECT id FROM \"$\" WHERE "_s, helpers::type_name<T>);
+    constexpr auto query_prefix = helpers::format("SELECT id FROM \"$\" WHERE "_s, type_helper::name);
     const auto query_values     = hana::unpack(fields, [](auto &&... x) {
         std::vector<std::string> values{std::forward<decltype(x)>(x)...};
         return fmt::format("{}", fmt::join(values, " and "));

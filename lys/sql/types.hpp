@@ -3,7 +3,6 @@
 #include <lys/sql/helpers.hpp>
 #include <boost/hana/adapt_struct.hpp>
 #include <boost/hana/drop_back.hpp>
-#include <boost/hana/experimental/type_name.hpp>
 #include <boost/hana/for_each.hpp>
 #include <boost/hana/functional/compose.hpp>
 #include <boost/hana/map.hpp>

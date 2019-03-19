@@ -1,6 +1,5 @@
 #pragma once
 
-#include <boost/hana/experimental/type_name.hpp>
 #include <boost/hana/fold.hpp>
 #include <boost/hana/intersperse.hpp>
 #include <boost/hana/string.hpp>
@@ -110,9 +109,6 @@ constexpr auto join = [](auto && xs) {
     using namespace boost;
     return hana::fold(hana::intersperse(std::forward<decltype(xs)>(xs), Sep{}), hana::string_c<>, hana::_ + hana::_);
 };
-
-template <typename T>
-const auto type_name = boost::hana::experimental::type_name<std::decay_t<T>>();
 
 template <typename Fmt, typename... Args>
 constexpr auto format(Fmt /*unused*/, Args... /*unused*/);
