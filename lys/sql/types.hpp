@@ -49,6 +49,9 @@ struct entry : T
 };
 
 template <typename T>
+constexpr auto entry_name{""_s};
+
+template <typename T>
 struct is_optional : std::false_type
 {};
 
@@ -97,7 +100,7 @@ private:
     static constexpr auto drop_first = [](auto x) { return boost::hana::drop_front(x, boost::hana::int_c<1>); };
 
 public:
-    static constexpr auto name = helpers::type_name<typename entry_type::base_type>;
+    static constexpr auto name{entry_name<T>};
 
     static constexpr auto entry_accessors = boost::hana::accessors<entry_type>();
     // accessors are used without the id (which appears last) in most cases
@@ -163,28 +166,44 @@ public:
 namespace lys::core
 {
 
-struct factory
+struct brand_t
 {
     std::string name;
 };
 
-struct car
+struct model_t
 {
-    std::string brand;
-    std::string model;
+    brand_t brand;
+    std::string name;
+};
+
+struct factory_t
+{
+    std::string name;
+};
+
+struct car_t
+{
+    model_t model;
     double price;
-    factory factory;
-    std::optional<std::string> suffix;
+    factory_t factory;
 };
 
 } // namespace lys::core
+
+#define NAME_AS_STR(name) #name
 
 #define REGISTER_ENTRY(NAME, ...)                                          \
     BOOST_HANA_ADAPT_STRUCT(lys::core::sql::entry<NAME>, __VA_ARGS__, id); \
                                                                            \
     template <>                                                            \
     struct lys::core::sql::is_entry<NAME> : std::true_type                 \
-    {}
+    {};                                                                    \
+                                                                           \
+    template <>                                                            \
+    constexpr auto lys::core::sql::entry_name<NAME>{BOOST_HANA_STRING(NAME_AS_STR(NAME))};
 
-REGISTER_ENTRY(lys::core::factory, name);
-REGISTER_ENTRY(lys::core::car, brand, model, price, factory, suffix);
+REGISTER_ENTRY(lys::core::brand_t, name);
+REGISTER_ENTRY(lys::core::model_t, brand, name);
+REGISTER_ENTRY(lys::core::factory_t, name);
+REGISTER_ENTRY(lys::core::car_t, model, price, factory);

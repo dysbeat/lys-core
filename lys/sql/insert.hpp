@@ -16,27 +16,32 @@ void insert(sqlite3 * db, const T & t)
     using namespace hana::literals;
     using type_helper = entry_helper<T>;
 
-    constexpr auto keys_str = helpers::join<helpers::comma_sep_t>(type_helper::keys);
-
-    constexpr auto query = helpers::format("INSERT INTO \"_s\"(_) VALUES({});"_s, type_helper::name, keys_str);
-    const auto values    = hana::unpack( //
-        hana::transform(type_helper::members(t),
-            [db](auto && value) {
-                using value_type = std::decay_t<decltype(value)>;
-                if constexpr (is_entry_v<value_type>)
-                {
-                    insert(db, value);
-                    return static_cast<int>(sqlite3_last_insert_rowid(db));
-                }
-                else
-                {
-                    return value;
-                }
-            }),
-        helpers::to_str);
-
     if (get_id(db, t) == -1)
     {
+        constexpr auto keys_str = helpers::join<helpers::comma_sep_t>(type_helper::keys);
+        constexpr auto query    = helpers::format("INSERT INTO \"$\"($) VALUES({});"_s, type_helper::name, keys_str);
+        const auto values       = hana::unpack( //
+            hana::transform(type_helper::members(t),
+                [db](auto && value) {
+                    using value_type = std::decay_t<decltype(value)>;
+                    if constexpr (is_entry_v<value_type>)
+                    {
+                        int id = get_id(db, value);
+                        if (id == -1)
+                        {
+                            insert(db, value);
+                            id = static_cast<int>(sqlite3_last_insert_rowid(db));
+                        }
+                        assert(id != -1);
+                        return id;
+                    }
+                    else
+                    {
+                        return value;
+                    }
+                }),
+            helpers::to_str);
+
         execute(db, fmt::format(query.c_str(), values.c_str()));
     }
 }

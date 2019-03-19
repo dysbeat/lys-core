@@ -17,16 +17,16 @@ void create_table(sqlite3 * db)
     using type_helper = entry_helper<T>;
 
     constexpr auto query =
-        helpers::format("CREATE TABLE \"_s\" (_);"_s, type_helper::name, helpers::join<helpers::comma_sep_t>(type_helper::entry_fields));
+        helpers::format("CREATE TABLE \"$\" ($);"_s, type_helper::name, helpers::join<helpers::comma_sep_t>(type_helper::entry_fields));
     execute(db, query.c_str());
 }
 
 template <typename T>
 void drop_table(sqlite3 * db)
 {
-    using entry_type = entry<std::decay_t<T>>;
+    using type_helper = entry_helper<T>;
 
-    constexpr auto query = helpers::format("DROP TABLE \"_s\";"_s, helpers::type_name<typename entry_type::base_type>);
+    constexpr auto query = helpers::format("DROP TABLE \"$\";"_s, type_helper::name);
     execute(db, query.c_str());
 }
 

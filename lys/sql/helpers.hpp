@@ -140,7 +140,7 @@ constexpr auto format(Fmt<Chars...> /*unused*/, Arg1 arg1, Args... args)
 {
     static_assert(sizeof...(Chars) > 0);
     constexpr auto c = first_char<Chars...>();
-    if constexpr (c == '_')
+    if constexpr (c == '$')
     {
         return arg1 + format(string_rest<Chars...>(), args...);
     }
