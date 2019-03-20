@@ -1,5 +1,6 @@
 #include <lys/sql/db.hpp>
-#include <iostream>
+#include <lys/types.hpp>
+#include <fmt/format.h>
 
 int main()
 {

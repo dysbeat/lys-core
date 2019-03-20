@@ -1,39 +1,16 @@
 #pragma once
 
+#include <lys/sql/converters.hpp>
 #include <lys/sql/helpers.hpp>
+#include <lys/sql/traits.hpp>
 #include <boost/hana/adapt_struct.hpp>
 #include <boost/hana/drop_back.hpp>
 #include <boost/hana/for_each.hpp>
-#include <boost/hana/functional/compose.hpp>
 #include <boost/hana/map.hpp>
 #include <boost/hana/members.hpp>
 #include <boost/hana/pair.hpp>
-#include <boost/hana/string.hpp>
 #include <boost/hana/zip.hpp>
-#include <fmt/format.h>
-#include <sqlite3/sqlite3.h>
 #include <functional>
-#include <iostream>
-#include <optional>
-#include <string>
-#include <tuple>
-#include <vector>
-
-namespace lys::core::sql
-{
-using namespace boost::hana::literals;
-
-constexpr auto convert_to_sqlite_type = boost::hana::make_map( //
-    boost::hana::make_pair(boost::hana::type_c<std::string>, "TEXT"_s),
-    boost::hana::make_pair(boost::hana::type_c<int>, "INT"_s),
-    boost::hana::make_pair(boost::hana::type_c<double>, "REAL"_s));
-
-constexpr auto convert_to_sqlite_function = boost::hana::make_map( //
-    boost::hana::make_pair(boost::hana::type_c<std::string>, sqlite3_column_text),
-    boost::hana::make_pair(boost::hana::type_c<int>, sqlite3_column_int),
-    boost::hana::make_pair(boost::hana::type_c<double>, sqlite3_column_double));
-
-} // namespace lys::core::sql
 
 namespace lys::core::sql
 {
@@ -48,37 +25,7 @@ struct entry : T
 };
 
 template <typename T>
-constexpr auto entry_name{""_s};
-
-template <typename T>
-struct is_optional : std::false_type
-{};
-
-template <typename T>
-struct is_optional<std::optional<T>> : std::true_type
-{};
-
-template <typename T>
-constexpr bool is_optional_v = is_optional<T>::value;
-
-template <typename T>
-struct is_entry : std::false_type
-{};
-
-template <typename T>
-constexpr bool is_entry_v = is_entry<T>::value;
-
-template <typename T>
-struct underlying_type
-{
-    using type = T;
-};
-
-template <typename T>
-struct underlying_type<std::optional<T>>
-{
-    using type = T;
-};
+constexpr auto entry_name{BOOST_HANA_STRING("")};
 
 template <typename T>
 struct underlying_type<sql::entry<T>>
@@ -109,7 +56,7 @@ public:
     static constexpr auto members       = [](auto && t) { return drop_last(boost::hana::members(entry_type{t})); };
 
     static constexpr auto entry_keys = boost::hana::concat(
-        boost::hana::make_tuple("id"_s), boost::hana::transform(accessors, [](auto x) { return boost::hana::first(x); }));
+        boost::hana::make_tuple(BOOST_HANA_STRING("id")), boost::hana::transform(accessors, [](auto x) { return boost::hana::first(x); }));
     static constexpr auto keys = drop_first(entry_keys);
 
     static constexpr auto entry_sql_calls =
@@ -120,7 +67,7 @@ public:
             using field_type  = underlying_type_t<member_type>;
             using insert_type = std::conditional_t<is_entry_v<field_type>, id_type, field_type>;
 
-            auto call = boost::hana::find(convert_to_sqlite_function, boost::hana::type_c<insert_type>).value();
+            auto call = boost::hana::find(type_to_sql_call, boost::hana::type_c<insert_type>).value();
             if constexpr (std::is_convertible_v<insert_type, std::string>)
             {
                 return [call](auto res, auto idx) { return reinterpret_cast<const char *>(std::invoke(call, res, idx)); };
@@ -129,12 +76,11 @@ public:
             {
                 return call;
             }
-            // return boost::hana::find(convert_to_sqlite_function, boost::hana::type_c<field_type>).value();
         }));
     static constexpr auto sql_calls = drop_first(entry_sql_calls);
 
-    static constexpr auto entry_sql_types =
-        boost::hana::concat(boost::hana::make_tuple("INTEGER PRIMARY KEY AUTOINCREMENT"_s), boost::hana::transform(accessors, [](auto x) {
+    static constexpr auto entry_sql_types = boost::hana::concat(
+        boost::hana::make_tuple(BOOST_HANA_STRING("INTEGER PRIMARY KEY AUTOINCREMENT")), boost::hana::transform(accessors, [](auto x) {
             using namespace boost;
             using namespace hana::literals;
 
@@ -146,7 +92,7 @@ public:
             // if field is a user defined type insert id instead of field
             using insert_type = std::conditional_t<is_entry_v<field_type>, id_type, field_type>;
 
-            constexpr auto t   = hana::find(convert_to_sqlite_type, hana::type_c<insert_type>);
+            constexpr auto t   = hana::find(type_to_sql_type, hana::type_c<insert_type>);
             using has_optional = std::conditional_t<is_optional_v<member_type>, hana::string<>, decltype("NOT NULL"_s)>;
             return helpers::join<helpers::space_t>(hana::make_tuple(t.value(), has_optional{}));
         }));
@@ -162,34 +108,6 @@ public:
 
 } // namespace lys::core::sql
 
-namespace lys::core
-{
-
-struct brand_t
-{
-    std::string name;
-};
-
-struct model_t
-{
-    brand_t brand;
-    std::string name;
-};
-
-struct factory_t
-{
-    std::string name;
-};
-
-struct car_t
-{
-    model_t model;
-    double price;
-    factory_t factory;
-};
-
-} // namespace lys::core
-
 #define NAME_AS_STR(name) #name
 
 #define REGISTER_ENTRY(NAME, ...)                                          \
@@ -201,8 +119,3 @@ struct car_t
                                                                            \
     template <>                                                            \
     constexpr auto lys::core::sql::entry_name<NAME>{BOOST_HANA_STRING(NAME_AS_STR(NAME))};
-
-REGISTER_ENTRY(lys::core::brand_t, name);
-REGISTER_ENTRY(lys::core::model_t, brand, name);
-REGISTER_ENTRY(lys::core::factory_t, name);
-REGISTER_ENTRY(lys::core::car_t, model, price, factory);

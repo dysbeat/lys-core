@@ -1,9 +1,9 @@
 #pragma once
 
+#include <lys/sql/entry.hpp>
 #include <lys/sql/execute.hpp>
 #include <lys/sql/helpers.hpp>
 #include <lys/sql/select.hpp>
-#include <lys/sql/types.hpp>
 #include <boost/hana/members.hpp>
 
 namespace lys::core::sql

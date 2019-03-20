@@ -3,6 +3,7 @@ add_subdirectory(sql)
 
 add_executable(app
     main.cpp
+    types.hpp
 )
 
 target_link_libraries(app

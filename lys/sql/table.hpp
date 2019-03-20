@@ -24,6 +24,8 @@ void create_table(sqlite3 * db)
 template <typename T>
 void drop_table(sqlite3 * db)
 {
+    using namespace boost::hana::literals;
+
     using type_helper = entry_helper<T>;
 
     constexpr auto query = helpers::format("DROP TABLE \"$\";"_s, type_helper::name);

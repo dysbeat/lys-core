@@ -1,11 +1,13 @@
 add_library(lys_sql
+    converters.hpp
+    db.hpp
+    entry.hpp
     execute.cpp
     execute.hpp
     helpers.hpp
     insert.hpp
     select.hpp
     table.hpp
-    types.hpp
     traits.hpp
 )
 
