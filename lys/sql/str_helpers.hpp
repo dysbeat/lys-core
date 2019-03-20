@@ -2,6 +2,7 @@
 
 #include <boost/hana/plus.hpp>
 #include <boost/hana/remove_range.hpp>
+#include <boost/hana/reverse.hpp>
 #include <boost/hana/size.hpp>
 #include <boost/hana/take_while.hpp>
 #include <boost/hana/tuple.hpp>
@@ -51,6 +52,22 @@ constexpr auto replace(boost::hana::string<Chars...> str, boost::hana::string<Wi
 
         return to_hana_string(hana::concat(hana::concat(first_part, replace_with_tuple), second_part));
     }
+}
+
+template <char BeforeThis, char... Chars>
+constexpr auto remove_before(boost::hana::string<Chars...> str)
+{
+    using namespace boost;
+    return to_hana_string(hana::reverse(hana::take_while(hana::reverse(to_hana_tuple(str)), [](auto x) {
+        if constexpr (!std::is_same_v<decltype(x), hana::char_<BeforeThis>>)
+        {
+            return hana::true_c;
+        }
+        else
+        {
+            return hana::false_c;
+        }
+    })));
 }
 
 } // namespace lys::core::sql::helpers
