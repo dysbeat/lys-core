@@ -69,4 +69,14 @@ constexpr auto remove_before(boost::hana::string<Chars...> str)
                 is_not_same_char<BeforeThis>)));
 }
 
+template <char Selector>
+constexpr auto format_str = [](auto fmt_str, auto... xs) {
+    using namespace boost;
+    constexpr auto selector_count = hana::count(fmt_str, Selector);
+    constexpr auto arg_count      = std::tuple_size_v<decltype(std::make_tuple(xs...))>;
+    static_assert(selector_count == arg_count, "Mismatch between selector count and number of replacing strings");
+    // constexpr auto first  = replace<Selector>(fmt_str, x1);
+    return hana::fold(hana::make_tuple(fmt_str, xs...), [](auto f, auto x) { return replace<Selector>(f, x); });
+};
+
 } // namespace lys::core::sql::helpers
