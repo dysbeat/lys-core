@@ -23,6 +23,15 @@ constexpr auto to_hana_tuple(HanaString<Chars...> str)
     return boost::hana::unpack(str, boost::hana::make_tuple);
 }
 
+template <char Char>
+constexpr auto is_same_char = [](auto x) {
+    using namespace boost::hana;
+    return if_(std::is_same<decltype(x), char_<Char>>{}, true_c, false_c);
+};
+
+template <char Char>
+constexpr auto is_not_same_char = [](auto x) { return boost::hana::not_(is_same_char<Char>(x)); };
+
 template <char ToReplace, char... Chars, char... WithChars>
 constexpr auto replace(boost::hana::string<Chars...> str, boost::hana::string<WithChars...> replace_with)
 {
@@ -30,16 +39,7 @@ constexpr auto replace(boost::hana::string<Chars...> str, boost::hana::string<Wi
     constexpr auto str_tuple          = to_hana_tuple(str);
     constexpr auto replace_with_tuple = to_hana_tuple(replace_with);
 
-    constexpr auto first_part = hana::take_while(str_tuple, [](auto x) {
-        if constexpr (!std::is_same_v<decltype(x), hana::char_<ToReplace>>)
-        {
-            return hana::true_c;
-        }
-        else
-        {
-            return hana::false_c;
-        }
-    });
+    constexpr auto first_part = hana::take_while(str_tuple, is_not_same_char<ToReplace>);
 
     if constexpr (hana::size(first_part) == hana::size(str_tuple))
     {
@@ -58,16 +58,11 @@ template <char BeforeThis, char... Chars>
 constexpr auto remove_before(boost::hana::string<Chars...> str)
 {
     using namespace boost;
-    return to_hana_string(hana::reverse(hana::take_while(hana::reverse(to_hana_tuple(str)), [](auto x) {
-        if constexpr (!std::is_same_v<decltype(x), hana::char_<BeforeThis>>)
-        {
-            return hana::true_c;
-        }
-        else
-        {
-            return hana::false_c;
-        }
-    })));
+    return to_hana_string(                         //
+        hana::reverse(                             //
+            hana::take_while(                      //
+                hana::reverse(to_hana_tuple(str)), //
+                is_not_same_char<BeforeThis>)));
 }
 
 } // namespace lys::core::sql::helpers
