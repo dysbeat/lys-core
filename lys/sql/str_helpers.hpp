@@ -1,5 +1,9 @@
 #pragma once
 
+#include <boost/hana/count.hpp>
+#include <boost/hana/equal.hpp>
+#include <boost/hana/greater_equal.hpp>
+#include <boost/hana/not_equal.hpp>
 #include <boost/hana/plus.hpp>
 #include <boost/hana/remove_range.hpp>
 #include <boost/hana/reverse.hpp>
@@ -7,6 +11,7 @@
 #include <boost/hana/take_while.hpp>
 #include <boost/hana/tuple.hpp>
 #include <boost/hana/type.hpp>
+#include <tuple>
 
 namespace lys::core::sql::helpers
 {
@@ -26,7 +31,7 @@ constexpr auto to_hana_tuple(HanaString<Chars...> str)
 template <char Char>
 constexpr auto is_same_char = [](auto x) {
     using namespace boost::hana;
-    return if_(std::is_same<decltype(x), char_<Char>>{}, true_c, false_c);
+    return std::is_same<decltype(x), char_<Char>>{};
 };
 
 template <char Char>
@@ -36,21 +41,20 @@ template <char ToReplace, char... Chars, char... WithChars>
 constexpr auto replace(boost::hana::string<Chars...> str, boost::hana::string<WithChars...> replace_with)
 {
     using namespace boost;
-    constexpr auto str_tuple          = to_hana_tuple(str);
-    constexpr auto replace_with_tuple = to_hana_tuple(replace_with);
-
-    constexpr auto first_part = hana::take_while(str_tuple, is_not_same_char<ToReplace>);
-
-    if constexpr (hana::size(first_part) == hana::size(str_tuple))
+    if constexpr (!hana::count(str, ToReplace))
     {
         return str;
     }
     else
     {
+        constexpr auto str_tuple      = to_hana_tuple(str);
+        constexpr auto first_part     = hana::take_while(str_tuple, is_not_same_char<ToReplace>);
         constexpr auto to_remove_size = hana::size(first_part) + hana::size_c<1>;
         constexpr auto second_part    = hana::remove_range(str_tuple, hana::size_c<0>, to_remove_size);
-
-        return to_hana_string(hana::concat(hana::concat(first_part, replace_with_tuple), second_part));
+        return to_hana_string(                                         //
+            hana::concat(                                              //
+                hana::concat(first_part, to_hana_tuple(replace_with)), //
+                second_part));
     }
 }
 
