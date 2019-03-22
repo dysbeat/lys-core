@@ -1,8 +1,7 @@
 #pragma once
 
 #include <lys/sql/execute.hpp>
-#include <lys/sql/helpers.hpp>
-#include <lys/sql/traits.hpp>
+#include <lys/str/format.hpp>
 #include <boost/hana/insert_range.hpp>
 
 namespace lys::core::sql
@@ -17,7 +16,7 @@ void create_table(sqlite3 * db)
     using type_helper = entry_helper<T>;
 
     constexpr auto query =
-        helpers::format("CREATE TABLE \"$\" ($);"_s, type_helper::name, helpers::join<helpers::comma_sep_t>(type_helper::entry_fields));
+        str::format<'$'>("CREATE TABLE \"$\" ($);"_s, type_helper::name, helpers::join<helpers::comma_sep_t>(type_helper::entry_fields));
     execute(db, query.c_str());
 }
 
@@ -28,7 +27,7 @@ void drop_table(sqlite3 * db)
 
     using type_helper = entry_helper<T>;
 
-    constexpr auto query = helpers::format("DROP TABLE \"$\";"_s, type_helper::name);
+    constexpr auto query = str::format<'$'>("DROP TABLE \"$\";"_s, type_helper::name);
     execute(db, query.c_str());
 }
 

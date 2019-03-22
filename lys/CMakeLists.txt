@@ -1,5 +1,6 @@
 add_subdirectory(type)
 add_subdirectory(sql)
+add_subdirectory(str)
 
 add_executable(app
     main.cpp

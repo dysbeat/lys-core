@@ -1,8 +1,8 @@
 #pragma once
 
 #include <lys/sql/execute.hpp>
-#include <lys/sql/helpers.hpp>
 #include <lys/sql/traits.hpp>
+#include <lys/str/format.hpp>
 #include <boost/hana/assert.hpp>
 #include <boost/hana/drop_back.hpp>
 #include <boost/hana/find_if.hpp>
@@ -84,7 +84,7 @@ T select_id(sqlite3 * db, int id)
     using namespace hana::literals;
 
     using type_helper    = entry_helper<T>;
-    constexpr auto query = helpers::format("SELECT * FROM \"$\" WHERE id = "_s, type_helper::name);
+    constexpr auto query = str::format<'$'>("SELECT * FROM \"$\" WHERE id = "_s, type_helper::name);
 
     sqlite3_stmt * res;
     T t{};
@@ -127,7 +127,7 @@ auto select(sqlite3 * db, std::vector<T> & results, const where_result & what)
 
     using type_helper = entry_helper<T>;
 
-    constexpr auto query = helpers::format("SELECT * FROM \"$\" WHERE "_s, type_helper::name);
+    constexpr auto query = str::format<'$'>("SELECT * FROM \"$\" WHERE "_s, type_helper::name);
 
     sqlite3_stmt * res;
     prepare(db, fmt::format("{} {};", query.c_str(), what.value), &res);
@@ -189,7 +189,7 @@ int get_id(sqlite3 * db, const T & t)
         }
     });
 
-    constexpr auto query_prefix = helpers::format("SELECT id FROM \"$\" WHERE "_s, type_helper::name);
+    constexpr auto query_prefix = str::format<'$'>("SELECT id FROM \"$\" WHERE "_s, type_helper::name);
     const auto query_values     = hana::unpack(fields, [](auto &&... x) {
         std::vector<std::string> values{std::forward<decltype(x)>(x)...};
         return fmt::format("{}", fmt::join(values, " and "));

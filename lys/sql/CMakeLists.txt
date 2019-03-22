@@ -13,6 +13,7 @@ add_library(lys_sql
 
 target_link_libraries(lys_sql
     PUBLIC
+    lys_str
     fmt
     sqlite3
 )
