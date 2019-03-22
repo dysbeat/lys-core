@@ -2,6 +2,7 @@
 
 #include <lys/sql/execute.hpp>
 #include <lys/str/format.hpp>
+#include <lys/str/join.hpp>
 #include <boost/hana/insert_range.hpp>
 
 namespace lys::core::sql
@@ -16,7 +17,7 @@ void create_table(sqlite3 * db)
     using type_helper = entry_helper<T>;
 
     constexpr auto query =
-        str::format<'$'>("CREATE TABLE \"$\" ($);"_s, type_helper::name, helpers::join<helpers::comma_sep_t>(type_helper::entry_fields));
+        str::format<'$'>("CREATE TABLE \"$\" ($);"_s, type_helper::name, str::join<str::comma_t>(type_helper::entry_fields));
     execute(db, query.c_str());
 }
 

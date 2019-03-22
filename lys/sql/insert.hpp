@@ -5,6 +5,7 @@
 #include <lys/sql/helpers.hpp>
 #include <lys/sql/select.hpp>
 #include <lys/str/format.hpp>
+#include <lys/str/join.hpp>
 #include <boost/hana/members.hpp>
 
 namespace lys::core::sql
@@ -19,7 +20,7 @@ void insert(sqlite3 * db, const T & t)
 
     if (get_id(db, t) == -1)
     {
-        constexpr auto keys_str = helpers::join<helpers::comma_sep_t>(type_helper::keys);
+        constexpr auto keys_str = str::join<str::comma_t>(type_helper::keys);
         constexpr auto query    = str::format<'$'>("INSERT INTO \"$\"($) VALUES({});"_s, type_helper::name, keys_str);
         const auto values       = hana::unpack( //
             hana::transform(type_helper::members(t),

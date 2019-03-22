@@ -3,6 +3,7 @@
 #include <lys/sql/converters.hpp>
 #include <lys/sql/helpers.hpp>
 #include <lys/sql/traits.hpp>
+#include <lys/str/join.hpp>
 #include <boost/hana/adapt_struct.hpp>
 #include <boost/hana/drop_back.hpp>
 #include <boost/hana/for_each.hpp>
@@ -94,16 +95,15 @@ public:
 
             constexpr auto t   = hana::find(type_to_sql_type, hana::type_c<insert_type>);
             using has_optional = std::conditional_t<is_optional_v<member_type>, hana::string<>, decltype("NOT NULL"_s)>;
-            return helpers::join<helpers::space_t>(hana::make_tuple(t.value(), has_optional{}));
+            return str::join<str::space_t>(hana::make_tuple(t.value(), has_optional{}));
         }));
     static constexpr auto sql_types = drop_first(entry_sql_types);
 
     static constexpr auto entry_zipped_fields = boost::hana::zip(entry_keys, entry_sql_types);
     static constexpr auto zipped_fields       = boost::hana::zip(keys, sql_types);
 
-    static constexpr auto entry_fields =
-        boost::hana::transform(entry_zipped_fields, [](auto x) { return helpers::join<helpers::space_t>(x); });
-    static constexpr auto fields = drop_first(entry_fields);
+    static constexpr auto entry_fields = boost::hana::transform(entry_zipped_fields, [](auto x) { return str::join<str::space_t>(x); });
+    static constexpr auto fields       = drop_first(entry_fields);
 };
 
 } // namespace lys::core::sql

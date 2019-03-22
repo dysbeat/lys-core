@@ -1,9 +1,11 @@
 add_library(lys_str
     convert.hpp
+    empty.cpp
+    format.hpp
+    join.hpp
     remove.hpp
     replace.hpp
-    format.hpp
-    empty.cpp
+    traits.hpp
 )
 
 target_include_directories(lys_sql
