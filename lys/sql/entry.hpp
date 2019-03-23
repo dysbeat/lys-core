@@ -4,6 +4,7 @@
 #include <lys/sql/helpers.hpp>
 #include <lys/sql/traits.hpp>
 #include <lys/str/join.hpp>
+#include <lys/str/remove.hpp>
 #include <boost/hana/adapt_struct.hpp>
 #include <boost/hana/drop_back.hpp>
 #include <boost/hana/for_each.hpp>
@@ -47,7 +48,7 @@ private:
     static constexpr auto drop_first = [](auto x) { return boost::hana::drop_front(x, boost::hana::int_c<1>); };
 
 public:
-    static constexpr auto name{entry_name<T>};
+    static constexpr auto name{str::remove_before<':'>(entry_name<T>)};
 
     static constexpr auto entry_accessors = boost::hana::accessors<entry_type>();
     // accessors are used without the id (which appears last) in most cases
