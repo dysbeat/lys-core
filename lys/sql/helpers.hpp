@@ -1,16 +1,10 @@
 #pragma once
 
-#include <boost/hana/fold.hpp>
-#include <boost/hana/intersperse.hpp>
-#include <boost/hana/string.hpp>
+#include <lys/str/join.hpp>
+#include <lys/str/repeat.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-#include <array>
 #include <optional>
-#include <string>
-#include <string_view>
-#include <tuple>
-#include <vector>
 
 namespace std
 {
@@ -31,27 +25,6 @@ namespace lys::core::sql::helpers
 {
 
 template <typename T>
-constexpr auto to_array = [](auto &&... x) { return std::array<T, sizeof...(x)>{std::forward<decltype(x)>(x)...}; };
-
-template <typename T>
-constexpr auto to_vector = [](auto &&... x) { return std::vector<T>{std::forward<decltype(x)>(x)...}; };
-
-constexpr auto to_tuple = [](auto &&... x) { return std::make_tuple(std::forward<decltype(x)>(x)...); };
-
-template <size_t N, typename Str, typename Sep>
-constexpr auto make_format(Str str, Sep sep)
-{
-    if constexpr (N > 0)
-    {
-        return str + sep + make_format<N - 1>(str, sep);
-    }
-    else
-    {
-        return str;
-    }
-}
-
-template <typename T>
 auto to_value(T && t)
 {
     if constexpr (std::is_convertible_v<T, std::string>)
@@ -67,7 +40,7 @@ auto to_value(T && t)
 auto to_str = [](auto &&... x) {
     using namespace boost::hana::literals;
 
-    constexpr auto format = make_format<sizeof...(x) - 1>("{}"_s, ", "_s);
+    constexpr auto format = str::join<str::comma_t>(str::repeat<sizeof...(x)>("{}"_s));
     return fmt::format(format.c_str(), to_value(std::forward<decltype(x)>(x))...);
 };
 
