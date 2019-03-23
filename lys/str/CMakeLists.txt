@@ -4,6 +4,7 @@ add_library(lys_str
     format.hpp
     join.hpp
     remove.hpp
+    repeat.hpp
     replace.hpp
     traits.hpp
 )
