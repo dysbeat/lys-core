@@ -35,6 +35,12 @@ struct db
     }
 
     template <typename T>
+    bool table_exists()
+    {
+        return sql::table_exists<T>(_db);
+    }
+
+    template <typename T>
     auto select(std::vector<T> & results, const where_result & where)
     {
         sql::select(_db, results, where);

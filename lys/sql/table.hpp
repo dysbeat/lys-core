@@ -24,12 +24,29 @@ void create_table(sqlite3 * db)
 template <typename T>
 void drop_table(sqlite3 * db)
 {
-    using namespace boost::hana::literals;
+    using namespace boost;
+    using namespace hana::literals;
 
     using type_helper = entry_helper<T>;
 
     constexpr auto query = str::format<'$'>("DROP TABLE \"$\";"_s, type_helper::name);
     execute(db, query.c_str());
+}
+
+template <typename T>
+bool table_exists(sqlite3 * db)
+{
+    using namespace boost;
+    using namespace hana::literals;
+
+    using type_helper = entry_helper<T>;
+
+    constexpr auto query = str::format<'$'>("SELECT name FROM sqlite_master WHERE type='table' AND name='$'"_s, type_helper::name);
+
+    sqlite3_stmt * res;
+    prepare(db, query.c_str(), &res);
+
+    return (sqlite3_step(res) == SQLITE_ROW);
 }
 
 } // namespace lys::core::sql
