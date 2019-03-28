@@ -6,7 +6,7 @@ int main()
 {
     using namespace lys::core;
 
-    auto db = sql::make_db();
+    auto db = sql::make_db(":memory:");
 
     // db.drop_table<car>();
     db.create_table<brand_t>();

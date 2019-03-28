@@ -5,6 +5,7 @@
 #include <lys/sql/table.hpp>
 #include <sqlite3/sqlite3.h>
 #include <stdexcept>
+#include <string_view>
 
 namespace lys::core::sql
 {
@@ -39,7 +40,7 @@ struct db
         sql::select(_db, results, where);
     }
 
-    friend db make_db();
+    friend db make_db(std::string_view name);
 
 private:
     sqlite3 * _db;
@@ -47,10 +48,10 @@ private:
     db() = default;
 };
 
-db make_db()
+db make_db(std::string_view name)
 {
     db d;
-    auto err = sqlite3_open(":memory:", &d._db);
+    auto err = sqlite3_open(std::data(name), &d._db);
     if (err != SQLITE_OK) std::runtime_error(sqlite3_errstr(err));
 
     sqlite3_extended_result_codes(d._db, 1);
