@@ -89,4 +89,26 @@ TEST_CASE("table", "[table]" ) {
             REQUIRE(!table_exists(db, "dummy_with_another"));
         }
     }
+
+    SECTION("table_exists")
+    {
+
+        SECTION("dummy")
+        {
+            create_table<test::dummy>(db);
+            REQUIRE(table_exists<test::dummy>(db) == table_exists(db, "dummy"));
+        }
+
+        SECTION("dummy_with_optional")
+        {
+            create_table<test::dummy_with_optional>(db);
+            REQUIRE(table_exists<test::dummy_with_optional>(db) == table_exists(db, "dummy_with_optional"));
+        }
+
+        SECTION("dummy_with_another")
+        {
+            create_table<test::dummy_with_another>(db);
+            REQUIRE(table_exists<test::dummy_with_another>(db) == table_exists(db, "dummy_with_another"));
+        }
+    }
 }
