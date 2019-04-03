@@ -2,6 +2,7 @@
 #include <lys/sql/table.hpp>
 #include <sqlite3/sqlite3.h>
 #include <lys/sql/entry.hpp>
+#include <fmt/format.h>
 
 using namespace lys::core::sql;
 
@@ -29,6 +30,15 @@ REGISTER_ENTRY(test::dummy, a);
 REGISTER_ENTRY(test::dummy_with_optional, a);
 REGISTER_ENTRY(test::dummy_with_another, d);
 
+static bool table_exists(sqlite3 * db, std::string_view table_name)
+{
+    const auto query = fmt::format("SELECT name FROM sqlite_master WHERE type='table' AND name='{}'", table_name);
+    sqlite3_stmt * res;
+    prepare(db, query.c_str(), &res);
+
+    return sqlite3_step(res) == SQLITE_ROW;
+}
+
 TEST_CASE("table", "[table]" ) {
     sqlite3 * db;
     auto err = sqlite3_open(":memory:", &db);
@@ -39,29 +49,19 @@ TEST_CASE("table", "[table]" ) {
         SECTION("dummy")
         {
             create_table<test::dummy>(db);
-            constexpr auto query = "SELECT name FROM sqlite_master WHERE type='table' AND name='dummy'";
-            sqlite3_stmt * res;
-            prepare(db, query, &res);
-
-            REQUIRE(sqlite3_step(res) == SQLITE_ROW);
+            REQUIRE(table_exists(db, "dummy"));
         }
 
         SECTION("dummy_with_optional")
         {
             create_table<test::dummy_with_optional>(db);
-            constexpr auto query = "SELECT name FROM sqlite_master WHERE type='table' AND name='dummy_with_optional'";
-            sqlite3_stmt * res;
-            prepare(db, query, &res);
-            REQUIRE(sqlite3_step(res) == SQLITE_ROW);
+            REQUIRE(table_exists(db, "dummy_with_optional"));
         }
 
         SECTION("dummy_with_another")
         {
             create_table<test::dummy_with_another>(db);
-            constexpr auto query = "SELECT name FROM sqlite_master WHERE type='table' AND name='dummy_with_another'";
-            sqlite3_stmt * res;
-            prepare(db, query, &res);
-            REQUIRE(sqlite3_step(res) == SQLITE_ROW);
+            REQUIRE(table_exists(db, "dummy_with_another"));
         }
     }
 }
