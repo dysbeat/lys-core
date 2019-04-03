@@ -18,10 +18,16 @@ struct dummy_with_optional
     std::optional<int> a;
 };
 
+struct dummy_with_another
+{
+    dummy d;
+};
+
 }
 
 REGISTER_ENTRY(test::dummy, a);
 REGISTER_ENTRY(test::dummy_with_optional, a);
+REGISTER_ENTRY(test::dummy_with_another, d);
 
 TEST_CASE("table", "[table]" ) {
     sqlite3 * db;
@@ -46,7 +52,15 @@ TEST_CASE("table", "[table]" ) {
             constexpr auto query = "SELECT name FROM sqlite_master WHERE type='table' AND name='dummy_with_optional'";
             sqlite3_stmt * res;
             prepare(db, query, &res);
+            REQUIRE(sqlite3_step(res) == SQLITE_ROW);
+        }
 
+        SECTION("dummy_with_another")
+        {
+            create_table<test::dummy_with_another>(db);
+            constexpr auto query = "SELECT name FROM sqlite_master WHERE type='table' AND name='dummy_with_another'";
+            sqlite3_stmt * res;
+            prepare(db, query, &res);
             REQUIRE(sqlite3_step(res) == SQLITE_ROW);
         }
     }
