@@ -4,6 +4,7 @@
 #include <lys/str/format.hpp>
 #include <lys/str/join.hpp>
 #include <boost/hana/insert_range.hpp>
+#include <lys/sql/entry.hpp>
 
 namespace lys::core::sql
 {
